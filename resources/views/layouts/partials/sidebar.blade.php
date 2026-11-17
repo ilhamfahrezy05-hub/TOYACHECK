@@ -130,23 +130,41 @@
         @endrole
 
         {{-- ==========================================================
-             3. MENU KHUSUS ROLE PENGADAAN
+             3. MENU KHUSUS ROLE PENGADAAN (FIGMA NODE 917-10746)
         ========================================================== --}}
         @role('pengadaan')
-        <span class="nav-section-label">Pengadaan</span>
-
-        <a href="{{ route('sparepart-requests.index') }}"
-           class="nav-item {{ request()->routeIs('sparepart-requests.*') ? 'active' : '' }}"
-           id="nav-pengadaan-requests">
-            <span class="nav-icon"><i class="fa-solid fa-paper-plane"></i></span>
-            Pengajuan Suku Cadang
-        </a>
-
-        <a href="{{ route('vendors.index') }}"
-           class="nav-item {{ request()->routeIs('vendors.*') ? 'active' : '' }}"
-           id="nav-vendor">
+        <a href="{{ route('pengadaan.vendors') }}"
+           class="nav-item {{ request()->routeIs('pengadaan.vendors*') ? 'active' : '' }}"
+           id="nav-pengadaan-vendors">
             <span class="nav-icon"><i class="fa-solid fa-store"></i></span>
             Vendor
+        </a>
+
+        @php
+            $pendingProcCount = \App\Models\SparepartRequest::where('status', 'pending')->count();
+        @endphp
+        <a href="{{ route('pengadaan.requests') }}"
+           class="nav-item {{ request()->routeIs('pengadaan.requests*') ? 'active' : '' }}"
+           id="nav-pengadaan-requests">
+            <span class="nav-icon"><i class="fa-solid fa-box-open"></i></span>
+            Permintaan
+            @if($pendingProcCount > 0)
+                <span class="nav-badge">{{ $pendingProcCount }}</span>
+            @endif
+        </a>
+
+        <a href="{{ route('pengadaan.reports') }}"
+           class="nav-item {{ request()->routeIs('pengadaan.reports*') ? 'active' : '' }}"
+           id="nav-pengadaan-reports">
+            <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+            Laporan
+        </a>
+
+        <a href="{{ route('pengadaan.approvals') }}"
+           class="nav-item {{ request()->routeIs('pengadaan.approvals*') ? 'active' : '' }}"
+           id="nav-pengadaan-approvals">
+            <span class="nav-icon"><i class="fa-regular fa-circle-check"></i></span>
+            Persetujuan
         </a>
         @endrole
 

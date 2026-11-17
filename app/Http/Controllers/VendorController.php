@@ -12,6 +12,10 @@ class VendorController extends Controller
 {
     public function index(Request $request)
     {
+        if (auth()->check() && auth()->user()->hasRole('pengadaan')) {
+            return redirect()->route('pengadaan.vendors', $request->query());
+        }
+
         $search = $request->query('q');
         $status = $request->query('status');
 

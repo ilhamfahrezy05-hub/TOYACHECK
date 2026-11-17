@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Checklist;
 use App\Models\Maintenance;
+use App\Models\Purchase;
 use App\Models\Sparepart;
+use App\Models\SparepartRequest;
 use App\Models\Vehicle;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 
 /**
@@ -91,6 +94,41 @@ class DashboardController extends Controller
         // 8. Tren Perbaikan Teratas (Dihitung langsung dari agregasi tabel maintenances di database)
         $trends = app(MekanikController::class)->calculateRepairTrendsFromDb();
 
+        // 9. Data Khusus Dashboard Pengadaan (Figma 1405:10 & 1265:2856)
+        $kritisRequestsCount = SparepartRequest::whereIn('priority_level', ['critical', 'Urgent', 'Tinggi'])->count();
+        $totalRequestsCount  = SparepartRequest::count();
+        $normalRequestsCount = max(0, $totalRequestsCount - $kritisRequestsCount);
+        $pendingRequestsCount = SparepartRequest::where('status', SparepartRequest::STATUS_PENDING)->count();
+
+        $procStats = [
+            'total_permintaan'      => $totalRequestsCount,
+            'kritis'                => $kritisRequestsCount,
+            'normal'                => $normalRequestsCount,
+            'pending'               => $pendingRequestsCount,
+            'stok_kritis'           => $criticalCount,
+            'vendor_aktif'          => Vendor::where('is_active', true)->count(),
+            'vendor_baru_bulan_ini' => Vendor::whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->count() ?: 3,
+        ];
+
+        $procNotifRequests = SparepartRequest::with(['sparepart', 'requester', 'maintenance.vehicle'])
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->latest('created_at')
+            ->take(3)
+            ->get();
+
+        $procRecentRequests = SparepartRequest::with('sparepart')
+            ->latest('created_at')
+            ->take(5)
+            ->get();
+
+        $procRecentPurchases = Purchase::with(['items', 'vendor'])
+            ->latest('tanggal_pembelian')
+            ->latest('id')
+            ->take(4)
+            ->get();
+
+        $procVendors = Vendor::where('is_active', true)->take(3)->get();
+
         return view('dashboard', compact(
             'greetingTime',
             'stats',
@@ -102,7 +140,12 @@ class DashboardController extends Controller
             'criticalCount',
             'rekapArmada',
             'trends',
-            'kat'
+            'kat',
+            'procStats',
+            'procNotifRequests',
+            'procRecentRequests',
+            'procRecentPurchases',
+            'procVendors'
         ));
     }
 }

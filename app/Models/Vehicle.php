@@ -22,7 +22,6 @@ class Vehicle extends Model
     ];
 
     protected $fillable = [
-        'kode_armada',
         'plat_nomor',
         'merk',
         'jenis_kendaraan',

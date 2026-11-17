@@ -42,12 +42,5 @@ class VehicleSeeder extends Seeder
                 'status'          => 'siap_jalan',
             ],
         ];
-
-        foreach ($vehicles as $data) {
-            Vehicle::updateOrCreate(
-                ['kode_armada' => $data['kode_armada']],
-                $data
-            );
-        }
     }
 }

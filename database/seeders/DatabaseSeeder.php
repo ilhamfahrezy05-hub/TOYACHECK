@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             InspectionItemSeeder::class,
             SparepartSeeder::class,
             VendorSeeder::class,
+            PurchaseSeeder::class,
         ]);
     }
 }

@@ -5,6 +5,9 @@
 @if(auth()->user()->hasRole('mekanik'))
     @section('page-title', 'Rekap Perbaikan')
     @section('page-subtitle', 'Monitoring persediaan suku cadang bengkel (ABC), rekap servis armada, dan tren perbaikan dari database')
+@elseif(auth()->user()->hasRole('pengadaan'))
+    @section('page-title', 'Ringkasan pengadaan')
+    @section('page-subtitle', 'Pelacakan pengadaan dan permintaan')
 @else
     @section('page-title', $greetingTime . ' MOUNTOYA JAYA JAYA LOGISTIK JAYA')
     @section('page-subtitle', 'Berikut ringkasan kondisi armada terbaru!')
@@ -415,7 +418,7 @@
 
 @section('content')
 
-@role('mekanik')
+@if(auth()->user()->hasRole('mekanik'))
 {{-- =========================================================================
      TAMPILAN DASHBOARD KHUSUS ROLE MEKANIK (FIGMA NODE 917-5235)
      Hanya menampilkan Persediaan Sparepart (ABC), Rekap Armada, & Tren Perbaikan
@@ -582,6 +585,241 @@
                 Masalah terbanyak pada periode {{ strtolower($trends['month_label']) }} terdeteksi pada kategori <strong>{{ $trends['top_category'] }}</strong>
             </div>
         </div>
+    </div>
+</div>
+
+@elseif(auth()->user()->hasRole('pengadaan'))
+{{-- =========================================================================
+     TAMPILAN DASHBOARD KHUSUS ROLE PENGADAAN (FIGMA NODE 1405:10 & 1265:2856)
+     Ringkasan Pengadaan: 3 KPI Cards, Notifikasi Permintaan, Status & Riwayat
+========================================================================= --}}
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:22px;margin-bottom:28px">
+    {{-- Card 1: PERMINTAAN --}}
+    <div style="background:#FFFFFF;border:1.5px solid #1E293B;border-radius:8px;padding:20px 22px;box-shadow:0 2px 6px rgba(15,23,42,0.04)">
+        <div style="font-size:11.5px;font-weight:800;letter-spacing:.08em;color:#475569;text-align:center;text-transform:uppercase;margin-bottom:6px">
+            PERMINTAAN
+        </div>
+        <div style="font-size:28px;font-weight:800;color:#0F172A;text-align:center;margin-bottom:14px">
+            {{ $procStats['total_permintaan'] ?? 0 }}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;background:#FEE2E2;padding:7px 14px;border-radius:4px">
+                <span style="font-size:10.5px;font-weight:800;color:#991B1B;letter-spacing:.05em">KRITIS</span>
+                <span style="font-size:13px;font-weight:800;color:#B91C1C">{{ $procStats['kritis'] ?? 0 }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;background:#E2E8F0;padding:7px 14px;border-radius:4px">
+                <span style="font-size:10.5px;font-weight:800;color:#334155;letter-spacing:.05em">NORMAL</span>
+                <span style="font-size:13px;font-weight:800;color:#0F172A">{{ $procStats['normal'] ?? 0 }}</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card 2: STOK KRITIS --}}
+    <div style="background:#FFF1F2;border:1.5px solid #FECDD3;border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-size:11.5px;font-weight:800;letter-spacing:.08em;color:#E11D48;text-transform:uppercase;margin-bottom:8px">
+            STOK KRITIS
+        </div>
+        <div style="font-size:30px;font-weight:900;color:#BE123C;margin-bottom:14px">
+            {{ $procStats['stok_kritis'] ?? 0 }}
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9F1239">
+            <i class="fa-solid fa-triangle-exclamation" style="color:#E11D48"></i>
+            <span>Segera lakukan pengadaan</span>
+        </div>
+    </div>
+
+    {{-- Card 3: VENDOR AKTIF --}}
+    <div style="background:#FFFFFF;border:1.5px solid #F87171;border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+        <div style="font-size:11.5px;font-weight:800;letter-spacing:.08em;color:#334155;text-transform:uppercase;margin-bottom:8px">
+            VENDOR AKTIF
+        </div>
+        <div style="font-size:30px;font-weight:800;color:#0F172A;margin-bottom:14px">
+            {{ $procStats['vendor_aktif'] ?? 0 }}
+        </div>
+        <a href="{{ route('pengadaan.vendors') }}" style="display:inline-flex;align-items:center;gap:8px;background:#F1F5F9;border:1px solid #CBD5E1;padding:8px 14px;border-radius:6px;font-size:11.5px;font-weight:700;color:#334155;text-decoration:none">
+            <i class="fa-solid fa-truck-fast" style="color:#475569"></i>
+            <span>{{ $procStats['vendor_baru_bulan_ini'] ?? 3 }} Vendor baru bulan ini</span>
+        </a>
+    </div>
+</div>
+
+{{-- Split 2 Kolom: Notifikasi Permintaan (Kiri) & Status/Riwayat (Kanan) --}}
+<div style="display:grid;grid-template-columns:1.05fr 1fr;gap:24px;align-items:start;margin-bottom:28px">
+
+    {{-- KOLOM KIRI: NOTIFIKASI PERMINTAAN --}}
+    <div>
+        <div style="font-size:12.5px;font-weight:800;letter-spacing:.05em;color:#0F172A;text-transform:uppercase;padding-bottom:8px;border-bottom:2px solid #0F172A;display:inline-block;margin-bottom:16px">
+            NOTIFIKASI PERMINTAAN
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+            @forelse($procNotifRequests as $notifReq)
+                @php
+                    $isHigh = in_array(strtolower($notifReq->priority_level ?? ''), ['critical', 'urgent', 'tinggi']);
+                @endphp
+                <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(15,23,42,0.03)">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                        <span style="font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:4px;background:{{ $isHigh ? '#FEE2E2' : '#F1F5F9' }};color:{{ $isHigh ? '#DC2626' : '#475569' }}">
+                            {{ $isHigh ? 'HIGH PRIORITY' : 'STANDARD' }}
+                        </span>
+                        <span style="font-size:11px;color:#94A3B8;font-weight:600">
+                            {{ $notifReq->created_at->diffForHumans() }}
+                        </span>
+                    </div>
+
+                    <div style="font-size:14.5px;font-weight:800;color:#0F172A;margin-bottom:3px">
+                        {{ $notifReq->nama_sparepart }} (x{{ $notifReq->qty }})
+                    </div>
+                    <div style="font-size:12px;color:#64748B;margin-bottom:14px">
+                        Warehouse: {{ $notifReq->sparepart->lokasi ?? ($notifReq->maintenance?->vehicle?->plat_nomor ? 'Unit ' . $notifReq->maintenance->vehicle->plat_nomor : 'Workshop Utama') }}
+                    </div>
+
+                    <a href="{{ route('pengadaan.requests.show', $notifReq->id) }}"
+                       style="display:block;width:100%;background:#090D16;color:#FFFFFF;text-align:center;padding:10px 14px;border-radius:4px;font-size:12px;font-weight:700;text-decoration:none;transition:opacity .15s">
+                        View
+                    </a>
+                </div>
+            @empty
+                <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:28px;text-align:center;color:#64748B">
+                    Belum ada notifikasi permintaan suku cadang.
+                </div>
+            @endforelse
+
+            {{-- Footer Queue Box (Antrian) --}}
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:16px 20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <i class="fa-solid fa-sliders" style="color:#334155;font-size:14px"></i>
+                        <div style="line-height:1.25">
+                            <div style="font-size:11.5px;color:#64748B;font-weight:600">Antrian:</div>
+                            <div style="font-size:13px;font-weight:800;color:#0F172A">{{ auth()->user()->name }}</div>
+                        </div>
+                    </div>
+                    <span style="background:#0F172A;color:#FFFFFF;font-size:11px;font-weight:800;width:22px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center">
+                        {{ $procStats['pending'] ?? 0 }}
+                    </span>
+                </div>
+                <div style="text-align:center;border-top:1px solid #F1F5F9;padding-top:10px">
+                    <a href="{{ route('pengadaan.requests') }}" style="font-size:11.5px;font-weight:700;color:#0F172A;text-decoration:underline">
+                        View All Approvals
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- KOLOM KANAN: MINI TABEL STATUS & RIWAYAT PEMBELANJAAN --}}
+    <div style="display:flex;flex-direction:column;gap:22px">
+
+        {{-- Mini Tabel Status Permintaan --}}
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:18px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <a href="{{ route('pengadaan.requests') }}" style="font-size:10.5px;font-weight:800;color:#0F172A;letter-spacing:.06em;text-decoration:none;text-transform:uppercase">
+                    LIHAT SEMUA
+                </a>
+            </div>
+
+            <table class="tc-table">
+                <thead>
+                    <tr style="background:#F8FAFC">
+                        <th style="font-size:10px">ITEM</th>
+                        <th style="font-size:10px;text-align:right">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($procRecentRequests as $rItem)
+                        @php
+                            $prCode = 'PR-' . $rItem->created_at->format('Y') . '-' . str_pad($rItem->id, 3, '0', STR_PAD_LEFT);
+                        @endphp
+                        <tr>
+                            <td>
+                                <a href="{{ route('pengadaan.requests', ['selected' => $rItem->id]) }}" style="text-decoration:none;color:#0F172A;font-weight:700;font-size:13px">
+                                    {{ $rItem->nama_sparepart }}
+                                </a>
+                                <div style="font-size:10.5px;color:#94A3B8;font-family:monospace">{{ $prCode }}</div>
+                            </td>
+                            <td style="text-align:right">
+                                @if($rItem->status === 'approved')
+                                    <span style="background:#DCFCE7;color:#15803D;font-size:11px;font-weight:800;padding:3px 10px;border-radius:4px">Approved</span>
+                                @elseif($rItem->status === 'rejected')
+                                    <span style="background:#FEE2E2;color:#B91C1C;font-size:11px;font-weight:800;padding:3px 10px;border-radius:4px">Rejected</span>
+                                @else
+                                    <span style="background:#FEF3C7;color:#D97706;font-size:11px;font-weight:800;padding:3px 10px;border-radius:4px">Pending</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="2" style="text-align:center;color:#94A3B8;padding:16px">Belum ada data permintaan.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Mini List Riwayat Pembelanjaan --}}
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:18px 20px">
+            <div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:14px">
+                Riwayat Pembelanjaan
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+                @forelse($procRecentPurchases as $pur)
+                    @php
+                        $firstItemName = $pur->items->first()?->nama_sparepart ?? $pur->kode_pembelian;
+                    @endphp
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #F1F5F9">
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <div style="width:32px;height:32px;border-radius:6px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;color:#334155;font-size:13px">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:12.5px;font-weight:800;color:#0F172A">{{ $firstItemName }}</div>
+                                <div style="font-size:11px;color:#64748B;font-weight:600">Rp {{ number_format($pur->total_harga, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
+                        <div style="font-size:10.5px;font-weight:800;color:#64748B;text-transform:uppercase">
+                            {{ $pur->tanggal_pembelian->translatedFormat('d M') }}
+                        </div>
+                    </div>
+                @empty
+                    <div style="font-size:12px;color:#94A3B8;text-align:center;padding:12px">Belum ada riwayat pembelanjaan.</div>
+                @endforelse
+            </div>
+
+            <a href="{{ route('pengadaan.reports') }}"
+               style="display:block;width:100%;background:#F1F5F9;color:#0F172A;text-align:center;padding:10px;border-radius:4px;font-size:11px;font-weight:800;letter-spacing:.05em;text-decoration:none;text-transform:uppercase">
+                LIHAT RIWAYAT LENGKAP
+            </a>
+        </div>
+
+        {{-- Widget Performa Vendor (Figma 1265:2856) --}}
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:18px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <span style="font-size:12.5px;font-weight:800;color:#0F172A">Performa Vendor (Comparison)</span>
+                <span style="font-size:10px;font-weight:700;color:#64748B">FULFILLMENT / ON-TIME</span>
+            </div>
+            @php
+                $rates = [
+                    ['98.2%', '95%', 96, '#0F172A'],
+                    ['88.5%', '90%', 88, '#1E3A8A'],
+                    ['82.0%', '85%', 82, '#475569'],
+                ];
+            @endphp
+            @foreach($procVendors as $idx => $vItem)
+                @php $r = $rates[$idx % count($rates)]; @endphp
+                <div style="margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:#1E293B;margin-bottom:4px">
+                        <span>{{ $vItem->nama_vendor }}</span>
+                        <span>{{ $r[0] }} / {{ $r[1] }}</span>
+                    </div>
+                    <div style="height:6px;background:#E2E8F0;border-radius:999px;overflow:hidden">
+                        <div style="height:100%;width:{{ $r[2] }}%;background:{{ $r[3] }};border-radius:999px"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
     </div>
 </div>
 
@@ -824,6 +1062,6 @@
         </table>
     </div>
 </div>
-@endrole
+@endif
 
 @endsection

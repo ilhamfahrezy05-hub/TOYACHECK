@@ -14,6 +14,7 @@ use App\Http\Controllers\SparepartRequestController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DriverAppController;
 use App\Http\Controllers\MekanikController;
+use App\Http\Controllers\PengadaanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -124,6 +125,76 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/approvals/export', [MekanikController::class, 'exportApprovals'])
                 ->name('approvals.export');
+        });
+
+    /*
+    |------------------------------------------------------------------
+    | Modul Khusus Role Pengadaan / Procurement (Figma node 917-10746)
+    |------------------------------------------------------------------
+    */
+    Route::prefix('pengadaan')
+        ->name('pengadaan.')
+        ->middleware('role:pengadaan|admin')
+        ->group(function () {
+
+            // 1. Dasbor Pengadaan
+            Route::get('/dashboard', [PengadaanController::class, 'dashboard'])
+                ->name('dashboard');
+
+            // 2. Permintaan Pengadaan (Master-Detail & Full Detail)
+            Route::get('/requests', [PengadaanController::class, 'requests'])
+                ->name('requests');
+
+            Route::get('/requests/{sparepartRequest}', [PengadaanController::class, 'showRequest'])
+                ->name('requests.show');
+
+            Route::patch('/requests/{sparepartRequest}/approve', [PengadaanController::class, 'approveRequest'])
+                ->name('requests.approve');
+
+            Route::patch('/requests/{sparepartRequest}/reject', [PengadaanController::class, 'rejectRequest'])
+                ->name('requests.reject');
+
+            Route::delete('/requests/{sparepartRequest}', [PengadaanController::class, 'destroyRequest'])
+                ->name('requests.destroy');
+
+            // 3. Lokasi Vendor & Pendaftaran Vendor
+            Route::get('/vendors', [PengadaanController::class, 'vendors'])
+                ->name('vendors');
+
+            Route::get('/vendors/create', [PengadaanController::class, 'createVendor'])
+                ->name('vendors.create');
+
+            Route::post('/vendors', [PengadaanController::class, 'storeVendor'])
+                ->name('vendors.store');
+
+            Route::put('/vendors/{vendor}', [PengadaanController::class, 'updateVendor'])
+                ->name('vendors.update');
+
+            Route::delete('/vendors/{vendor}', [PengadaanController::class, 'destroyVendor'])
+                ->name('vendors.destroy');
+
+            // 4. Laporan / Riwayat Belanja & Detail Transaksi Baru (Input Nota)
+            Route::get('/reports/export-pdf', [PengadaanController::class, 'exportReportsPdf'])
+                ->name('reports.export-pdf');
+
+            Route::get('/reports', [PengadaanController::class, 'reports'])
+                ->name('reports');
+
+            Route::get('/reports/create', [PengadaanController::class, 'createReport'])
+                ->name('reports.create');
+
+            Route::post('/reports', [PengadaanController::class, 'storeReport'])
+                ->name('reports.store');
+
+            Route::delete('/reports/{purchase}', [PengadaanController::class, 'destroyReport'])
+                ->name('reports.destroy');
+
+            // 5. Persetujuan (Riwayat Permintaan Disetujui)
+            Route::get('/approvals/export-pdf', [PengadaanController::class, 'exportApprovalsPdf'])
+                ->name('approvals.export-pdf');
+
+            Route::get('/approvals', [PengadaanController::class, 'approvals'])
+                ->name('approvals');
         });
 
     /*

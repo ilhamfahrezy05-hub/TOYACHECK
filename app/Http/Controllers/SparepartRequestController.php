@@ -19,6 +19,9 @@ class SparepartRequestController extends Controller
         if (auth()->check() && auth()->user()->hasRole('mekanik')) {
             return redirect()->route('mekanik.approvals');
         }
+        if (auth()->check() && auth()->user()->hasRole('pengadaan')) {
+            return redirect()->route('pengadaan.requests', $request->query());
+        }
 
         $status = $request->query('status');
         $user   = auth()->user();
