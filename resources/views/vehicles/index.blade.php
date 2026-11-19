@@ -122,6 +122,7 @@
                         <th style="width:52px">#</th>
                         <th>Plat Nomor</th>
                         <th>Jenis &amp; Merk</th>
+                        <th>Kepemilikan</th>
                         <th>Tahun</th>
                         <th>Ukuran / Dimensi Box</th>
                         <th>STNK &amp; KIR</th>
@@ -166,6 +167,21 @@
                         <td>
                             <div style="font-weight:600;color:var(--text-primary)">{{ $vehicle->jenis_kendaraan }}</div>
                             <div style="font-size:12px;color:var(--text-secondary)">{{ $vehicle->merk }}</div>
+                        </td>
+
+                        {{-- Kepemilikan --}}
+                        <td>
+                            @if(($vehicle->kepemilikan ?? 'internal') === 'eksternal')
+                                <span class="badge badge-info">
+                                    <i class="fa-solid fa-building-user"></i>
+                                    Eksternal
+                                </span>
+                            @else
+                                <span class="badge badge-primary" style="background:var(--primary-subtle);color:var(--primary)">
+                                    <i class="fa-solid fa-building"></i>
+                                    Internal
+                                </span>
+                            @endif
                         </td>
 
                         {{-- Tahun --}}
@@ -231,6 +247,7 @@
                                     data-plat="{{ $vehicle->plat_nomor }}"
                                     data-merk="{{ $vehicle->merk }}"
                                     data-jenis="{{ $vehicle->jenis_kendaraan }}"
+                                    data-kepemilikan="{{ $vehicle->kepemilikan ?? 'internal' }}"
                                     data-tahun="{{ $vehicle->tahun ?? '' }}"
                                     data-dimensi="{{ $vehicle->dimensi_box ?? '' }}"
                                     data-stnk="{{ $vehicle->tahun_stnk ?? '' }}"
@@ -252,7 +269,7 @@
                     </tr>
                     @empty
                     <tr id="emptyVehicleRow">
-                        <td colspan="9">
+                        <td colspan="10">
                             <div class="empty-state">
                                 <div class="empty-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
                                 <div class="empty-title">Belum Ada Data Armada</div>
@@ -385,7 +402,7 @@
                     </div>
                 </div>
 
-                {{-- Row 3: Dimensi Box / Ukuran Truck + Tahun STNK + Tahun KIR --}}
+                {{-- Row 3: Dimensi Box / Ukuran Truck + STNK + KIR --}}
                 <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin-top:16px">
                     <div class="form-group" style="margin-bottom:0">
                         <label class="form-label" for="c_dimensi_box">Ukuran Truck / Dimensi Box</label>
@@ -399,43 +416,59 @@
                     </div>
 
                     <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label" for="c_tahun_stnk">Tahun STNK</label>
+                        <label class="form-label" for="c_tahun_stnk">STNK (DD/MM/YY)</label>
                         <input
                             type="text"
                             id="c_tahun_stnk"
                             name="tahun_stnk"
                             class="form-control"
                             value="{{ old('_action') === 'create' ? old('tahun_stnk') : '' }}"
-                            placeholder="Contoh: 2027">
+                            placeholder="Contoh: 11/09/28">
                     </div>
 
                     <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label" for="c_tahun_kir">Tahun KIR</label>
+                        <label class="form-label" for="c_tahun_kir">KIR (DD/MM/YY)</label>
                         <input
                             type="text"
                             id="c_tahun_kir"
                             name="tahun_kir"
                             class="form-control"
                             value="{{ old('_action') === 'create' ? old('tahun_kir') : '' }}"
-                            placeholder="Contoh: 2026">
+                            placeholder="Contoh: 15/03/27">
                     </div>
                 </div>
 
-                {{-- Row 4: Status --}}
-                <div class="form-group" style="margin-top:16px;margin-bottom:0">
-                    <label class="form-label" for="c_status">
-                        Status <span class="required">*</span>
-                    </label>
-                    <select
-                        id="c_status"
-                        name="status"
-                        class="form-control"
-                        required>
-                        <option value="siap_jalan"  {{ old('_action') === 'create' && (old('status') === 'siap_jalan' || !old('status')) ? 'selected' : '' }}>Siap Jalan</option>
-                        <option value="maintenance" {{ old('_action') === 'create' && old('status') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                        <option value="rusak"       {{ old('_action') === 'create' && old('status') === 'rusak' ? 'selected' : '' }}>Rusak</option>
-                        <option value="nonaktif"    {{ old('_action') === 'create' && old('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
-                    </select>
+                {{-- Row 4: Kepemilikan + Status --}}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label" for="c_kepemilikan">
+                            Kepemilikan <span class="required">*</span>
+                        </label>
+                        <select
+                            id="c_kepemilikan"
+                            name="kepemilikan"
+                            class="form-control"
+                            required>
+                            <option value="internal"  {{ old('_action') === 'create' && (old('kepemilikan') === 'internal' || !old('kepemilikan')) ? 'selected' : '' }}>Internal</option>
+                            <option value="eksternal" {{ old('_action') === 'create' && old('kepemilikan') === 'eksternal' ? 'selected' : '' }}>Eksternal</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label" for="c_status">
+                            Status <span class="required">*</span>
+                        </label>
+                        <select
+                            id="c_status"
+                            name="status"
+                            class="form-control"
+                            required>
+                            <option value="siap_jalan"  {{ old('_action') === 'create' && (old('status') === 'siap_jalan' || !old('status')) ? 'selected' : '' }}>Siap Jalan</option>
+                            <option value="maintenance" {{ old('_action') === 'create' && old('status') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                            <option value="rusak"       {{ old('_action') === 'create' && old('status') === 'rusak' ? 'selected' : '' }}>Rusak</option>
+                            <option value="nonaktif"    {{ old('_action') === 'create' && old('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                        </select>
+                    </div>
                 </div>
 
             </div>{{-- /.modal-body --}}
@@ -558,7 +591,7 @@
                     </div>
                 </div>
 
-                {{-- Row 3: Dimensi Box / Ukuran Truck + Tahun STNK + Tahun KIR --}}
+                {{-- Row 3: Dimensi Box / Ukuran Truck + STNK + KIR --}}
                 <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin-top:16px">
                     <div class="form-group" style="margin-bottom:0">
                         <label class="form-label" for="e_dimensi_box">Ukuran Truck / Dimensi Box</label>
@@ -571,37 +604,49 @@
                     </div>
 
                     <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label" for="e_tahun_stnk">Tahun STNK</label>
+                        <label class="form-label" for="e_tahun_stnk">STNK (DD/MM/YY)</label>
                         <input
                             type="text"
                             id="e_tahun_stnk"
                             name="tahun_stnk"
                             class="form-control"
-                            placeholder="Contoh: 2027">
+                            placeholder="Contoh: 11/09/28">
                     </div>
 
                     <div class="form-group" style="margin-bottom:0">
-                        <label class="form-label" for="e_tahun_kir">Tahun KIR</label>
+                        <label class="form-label" for="e_tahun_kir">KIR (DD/MM/YY)</label>
                         <input
                             type="text"
                             id="e_tahun_kir"
                             name="tahun_kir"
                             class="form-control"
-                            placeholder="Contoh: 2026">
+                            placeholder="Contoh: 15/03/27">
                     </div>
                 </div>
 
-                {{-- Row 4: Status --}}
-                <div class="form-group" style="margin-top:16px;margin-bottom:0">
-                    <label class="form-label" for="e_status">
-                        Status <span class="required">*</span>
-                    </label>
-                    <select id="e_status" name="status" class="form-control" required>
-                        <option value="siap_jalan">Siap Jalan</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="rusak">Rusak</option>
-                        <option value="nonaktif">Nonaktif</option>
-                    </select>
+                {{-- Row 4: Kepemilikan + Status --}}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label" for="e_kepemilikan">
+                            Kepemilikan <span class="required">*</span>
+                        </label>
+                        <select id="e_kepemilikan" name="kepemilikan" class="form-control" required>
+                            <option value="internal">Internal</option>
+                            <option value="eksternal">Eksternal</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label" for="e_status">
+                            Status <span class="required">*</span>
+                        </label>
+                        <select id="e_status" name="status" class="form-control" required>
+                            <option value="siap_jalan">Siap Jalan</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="rusak">Rusak</option>
+                            <option value="nonaktif">Nonaktif</option>
+                        </select>
+                    </div>
                 </div>
 
             </div>{{-- /.modal-body --}}
@@ -756,6 +801,7 @@
                 document.getElementById('e_plat_nomor').value    = '{{ addslashes(old('plat_nomor')) }}';
                 document.getElementById('e_merk').value          = '{{ addslashes(old('merk')) }}';
                 document.getElementById('e_jenis_kendaraan').value = '{{ addslashes(old('jenis_kendaraan')) }}';
+                document.getElementById('e_kepemilikan').value   = '{{ addslashes(old('kepemilikan', 'internal')) }}';
                 document.getElementById('e_tahun').value         = '{{ old('tahun') }}';
                 document.getElementById('e_dimensi_box').value   = '{{ addslashes(old('dimensi_box')) }}';
                 document.getElementById('e_tahun_stnk').value    = '{{ addslashes(old('tahun_stnk')) }}';
@@ -778,6 +824,7 @@
         document.getElementById('e_plat_nomor').value           = btn.getAttribute('data-plat') || '';
         document.getElementById('e_merk').value                 = btn.getAttribute('data-merk') || '';
         document.getElementById('e_jenis_kendaraan').value      = btn.getAttribute('data-jenis') || '';
+        document.getElementById('e_kepemilikan').value          = btn.getAttribute('data-kepemilikan') || 'internal';
         document.getElementById('e_tahun').value                = btn.getAttribute('data-tahun') || '';
         document.getElementById('e_dimensi_box').value          = btn.getAttribute('data-dimensi') || '';
         document.getElementById('e_tahun_stnk').value           = btn.getAttribute('data-stnk') || '';

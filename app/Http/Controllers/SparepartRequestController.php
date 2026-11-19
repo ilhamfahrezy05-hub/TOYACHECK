@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Maintenance;
+use App\Models\Purchase;
 use App\Models\Sparepart;
 use App\Models\SparepartRequest;
 use App\Models\Vendor;
@@ -10,7 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * Permintaan suku cadang: Mekanik / Admin mengajukan, Admin Distribusi menyetujui atau menolak.
+ * Permintaan suku cadang: Mekanik / Admin mengajukan, Admin Distribusi menyetujui atau menolak,
+ * serta memantau status realisasi pembelian dari tim Pengadaan.
  */
 class SparepartRequestController extends Controller
 {
@@ -23,22 +25,39 @@ class SparepartRequestController extends Controller
             return redirect()->route('pengadaan.requests', $request->query());
         }
 
-        $status = $request->query('status');
-        $user   = auth()->user();
+        $status         = $request->query('status');
+        $purchaseStatus = $request->query('purchase_status');
+        $user           = auth()->user();
 
-        $requests = SparepartRequest::with(['sparepart', 'maintenance.vehicle', 'requester', 'reviewer'])
+        $requests = SparepartRequest::with([
+                'sparepart',
+                'maintenance.vehicle',
+                'requester',
+                'reviewer',
+                'latestPurchase.vendor',
+                'latestPurchase.items',
+            ])
             // Selain Admin & Pengadaan hanya melihat permintaannya sendiri
             ->when(! $user->hasAnyRole(['admin', 'pengadaan']), fn ($q) => $q->where('requested_by', $user->id))
             ->when($status, fn ($q, $v) => $q->where('status', $v))
+            ->when($purchaseStatus === 'sudah_dibeli', fn ($q) => $q->whereHas('purchases'))
+            ->when($purchaseStatus === 'belum_dibeli', fn ($q) => $q->whereDoesntHave('purchases'))
             ->latest()
             ->paginate($user->perPage())
             ->withQueryString();
 
+        $purchases = Purchase::with(['vendor', 'items.sparepart', 'user', 'sparepartRequest.requester'])
+            ->latest('tanggal_pembelian')
+            ->latest('id')
+            ->get();
+
         $stats = [
-            'total'    => SparepartRequest::count(),
-            'pending'  => SparepartRequest::where('status', SparepartRequest::STATUS_PENDING)->count(),
-            'approved' => SparepartRequest::where('status', SparepartRequest::STATUS_APPROVED)->count(),
-            'rejected' => SparepartRequest::where('status', SparepartRequest::STATUS_REJECTED)->count(),
+            'total'           => SparepartRequest::count(),
+            'pending'         => SparepartRequest::where('status', SparepartRequest::STATUS_PENDING)->count(),
+            'approved'        => SparepartRequest::where('status', SparepartRequest::STATUS_APPROVED)->count(),
+            'rejected'        => SparepartRequest::where('status', SparepartRequest::STATUS_REJECTED)->count(),
+            'purchased'       => SparepartRequest::whereHas('purchases')->count(),
+            'total_purchases' => $purchases->count(),
         ];
 
         $spareparts   = Sparepart::orderBy('nama_sparepart')->get();
@@ -49,7 +68,7 @@ class SparepartRequestController extends Controller
             ->get();
 
         return view('sparepart-requests.index', compact(
-            'requests', 'stats', 'spareparts', 'vendors', 'maintenances', 'status'
+            'requests', 'purchases', 'stats', 'spareparts', 'vendors', 'maintenances', 'status', 'purchaseStatus'
         ));
     }
 

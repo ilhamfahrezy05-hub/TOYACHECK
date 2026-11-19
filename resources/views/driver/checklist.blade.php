@@ -95,6 +95,59 @@
         cursor: pointer;
     }
 
+    .m-btn-repair-mode {
+        background: #D97706;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 6px;
+        padding: 5px 11px;
+        font-size: 10.5px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.15s;
+        box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+    }
+
+    .m-btn-repair-mode.active {
+        background: #991B1B;
+        box-shadow: 0 2px 8px rgba(153, 27, 27, 0.35);
+    }
+
+    .m-item-card.locked-repair {
+        background: #E5E7EB !important;
+        border-color: #CBD5E1 !important;
+        opacity: 0.55;
+        pointer-events: none;
+        user-select: none;
+        filter: grayscale(1);
+    }
+
+    .m-notes-box.required-active {
+        background: #FFFBEB;
+        border: 2px solid #D97706;
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.14);
+    }
+
+    .m-repair-banner {
+        display: none;
+        margin: 0 20px 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #FEF3C7;
+        border: 1px solid #F59E0B;
+        color: #92400E;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.45;
+    }
+
+    .m-repair-banner.show {
+        display: block;
+    }
+
     /* Daftar Kartu Item Pemeriksaan (Abu-abu dengan bayangan seperti Figma) */
     .m-items-container {
         padding: 4px 18px 24px;
@@ -365,13 +418,29 @@
         </div>
     </div>
 
-    {{-- Bar Progres & Tombol Tandai Semua Baik --}}
+    {{-- Bar Progres & Tombol Mode --}}
     <div class="m-progress-strip">
-        <span>Terisi: <strong id="checkedCounter">0</strong> / {{ $items->count() }} komponen</span>
-        <button type="button" class="m-btn-check-all" onclick="markAllItemsGood()">
-            <i class="fa-solid fa-check-double"></i> Tandai Semua Aman
-        </button>
+        <span id="progressCounterWrap">Terisi: <strong id="checkedCounter">0</strong> / {{ $items->count() }} komponen</span>
+
+        @if($type === 'fisik')
+            <input type="hidden" name="dalam_perbaikan" id="dalamPerbaikanInput" value="{{ old('dalam_perbaikan', '0') }}">
+            <button type="button" class="m-btn-repair-mode" id="btnDalamPerbaikan" onclick="toggleDalamPerbaikan()">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                <span id="btnDalamPerbaikanText">Dalam Perbaikan</span>
+            </button>
+        @else
+            <button type="button" class="m-btn-check-all" onclick="markAllItemsGood()">
+                <i class="fa-solid fa-check-double"></i> Tandai Semua Aman
+            </button>
+        @endif
     </div>
+
+    @if($type === 'fisik')
+    <div class="m-repair-banner" id="repairBannerInfo">
+        <i class="fa-solid fa-lock" style="margin-right:4px"></i>
+        <strong>Mode Dalam Perbaikan Aktif:</strong> Seluruh komponen pemeriksaan dikunci. Wajib mengisi kolom <strong>Catatan Keterangan</strong> di bagian bawah sebelum menekan tombol Submit.
+    </div>
+    @endif
 
     {{-- Daftar Kartu Komponen Pemeriksaan sesuai Figma --}}
     <div class="m-items-container">
@@ -463,14 +532,18 @@
 
     {{-- Catatan Tambahan --}}
     @if($items->count() > 0)
-    <div class="m-notes-box">
-        <label style="display:block;font-size:12px;font-weight:700;color:#111827;margin-bottom:6px">
+    <div class="m-notes-box" id="notesBoxWrap">
+        <label id="notesLabelText" style="display:block;font-size:12px;font-weight:700;color:#111827;margin-bottom:6px">
             <i class="fa-regular fa-comment-dots" style="margin-right:4px;color:#0B2E8A"></i>
-            Catatan Tambahan (Opsional)
+            <span id="notesLabelSpan">Catatan Tambahan (Opsional)</span>
         </label>
         <textarea name="catatan"
+                  id="catatanTextarea"
                   class="m-notes-textarea"
                   placeholder="Tuliskan keterangan detail jika ditemukan kerusakan atau catatan kebersihan...">{{ old('catatan') }}</textarea>
+        <div id="notesRequiredError" style="display:none;color:#DC2626;font-size:11px;font-weight:700;margin-top:6px;">
+            <i class="fa-solid fa-circle-exclamation"></i> Kolom catatan keterangan wajib diisi saat kendaraan dalam perbaikan!
+        </div>
 
         <button type="submit" class="m-btn-submit-green" style="width:100%;margin-top:12px;padding:12px">
             <i class="fa-solid fa-paper-plane" style="margin-right:6px"></i>
@@ -496,8 +569,10 @@
         <div style="font-size:12.5px;color:#4B5563;line-height:1.6">
             <p style="margin-bottom:8px">1. Tekan tombol <strong>Check Keadaan</strong> pada setiap kartu komponen kendaraan.</p>
             <p style="margin-bottom:8px">2. Pilih <strong>Aman / Sesuai</strong> jika kondisi baik, atau <strong>Ada Kendala</strong> jika ditemukan masalah/kerusakan.</p>
-            <p style="margin-bottom:8px">3. Tekan ikon <strong>Kamera</strong> <i class="fa-solid fa-camera"></i> untuk melampirkan foto bukti kondisi atau kerusakan.</p>
-            <p>4. Setelah semua item diperiksa, tekan tombol hijau <strong>Submit</strong> untuk mengirim laporan ke sistem Admin Distribusi & HSE.</p>
+            @if($type === 'fisik')
+            <p style="margin-bottom:8px">3. Jika kendaraan sedang rusak/diservis dan tidak bisa diperiksa per item, tekan tombol <strong>Dalam Perbaikan</strong> lalu isi <strong>Catatan Keterangan (Wajib)</strong>.</p>
+            @endif
+            <p>4. Setelah selesai, tekan tombol hijau <strong>Submit</strong> untuk mengirim laporan.</p>
         </div>
     </div>
 </div>
@@ -506,13 +581,20 @@
 
 @push('scripts')
 <script>
+    function isRepairModeActive() {
+        var inp = document.getElementById('dalamPerbaikanInput');
+        return inp && inp.value === '1';
+    }
+
     function toggleSelector(itemId) {
+        if (isRepairModeActive()) return;
         var el = document.getElementById('selector_' + itemId);
         if (!el) return;
         el.classList.toggle('open');
     }
 
     function setItemCondition(itemId, value) {
+        if (isRepairModeActive()) return;
         var input   = document.getElementById('itemInput_' + itemId);
         var card    = document.getElementById('itemCard_' + itemId);
         var btnText = document.getElementById('btnText_' + itemId);
@@ -549,6 +631,94 @@
         });
     }
 
+    function toggleDalamPerbaikan() {
+        var inp         = document.getElementById('dalamPerbaikanInput');
+        var btn         = document.getElementById('btnDalamPerbaikan');
+        var btnText     = document.getElementById('btnDalamPerbaikanText');
+        var banner      = document.getElementById('repairBannerInfo');
+        var notesBox    = document.getElementById('notesBoxWrap');
+        var notesSpan   = document.getElementById('notesLabelSpan');
+        var textarea    = document.getElementById('catatanTextarea');
+        var errBox      = document.getElementById('notesRequiredError');
+        var cards       = document.querySelectorAll('.m-item-card[data-item-id]');
+
+        if (!inp) return;
+
+        var willActivate = inp.value !== '1';
+        inp.value = willActivate ? '1' : '0';
+
+        if (willActivate) {
+            btn?.classList.add('active');
+            if (btnText) btnText.textContent = 'Batal Mode Perbaikan';
+            banner?.classList.add('show');
+
+            // Kunci & kosongkan seluruh komponen pemeriksaan menjadi abu-abu
+            cards.forEach(function (card) {
+                var id = card.getAttribute('data-item-id');
+                card.classList.remove('status-aman', 'status-kendala');
+                card.classList.add('locked-repair');
+
+                var itemInp = document.getElementById('itemInput_' + id);
+                if (itemInp) itemInp.value = '';
+
+                var cAman = document.getElementById('choiceAman_' + id);
+                var cKend = document.getElementById('choiceKendala_' + id);
+                cAman?.classList.remove('selected');
+                cKend?.classList.remove('selected');
+
+                var sel = document.getElementById('selector_' + id);
+                sel?.classList.remove('open');
+
+                var bText = document.getElementById('btnText_' + id);
+                if (bText) bText.textContent = 'Terkunci (Dalam Perbaikan)';
+
+                var badge = document.getElementById('itemBadge_' + id);
+                if (badge) badge.innerHTML = '<i class="fa-solid fa-lock" style="font-size:9px"></i>';
+            });
+
+            // Jadikan catatan wajib diisi
+            notesBox?.classList.add('required-active');
+            if (notesSpan) {
+                notesSpan.innerHTML = 'Catatan Keterangan Perbaikan <span style="color:#DC2626">(Wajib Diisi *)</span>';
+            }
+            if (textarea) {
+                textarea.setAttribute('required', 'required');
+                textarea.placeholder = 'WAJIB DIISI: Tuliskan keterangan kerusakan / alasan kendaraan sedang dalam perbaikan...';
+                setTimeout(function () {
+                    notesBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    textarea.focus();
+                }, 150);
+            }
+        } else {
+            btn?.classList.remove('active');
+            if (btnText) btnText.textContent = 'Dalam Perbaikan';
+            banner?.classList.remove('show');
+
+            cards.forEach(function (card) {
+                var id = card.getAttribute('data-item-id');
+                card.classList.remove('locked-repair');
+
+                var bText = document.getElementById('btnText_' + id);
+                if (bText) bText.textContent = 'Check Keadaan';
+
+                var badge = document.getElementById('itemBadge_' + id);
+                if (badge) badge.innerHTML = '!';
+            });
+
+            notesBox?.classList.remove('required-active');
+            if (notesSpan) {
+                notesSpan.textContent = 'Catatan Tambahan (Opsional)';
+            }
+            if (textarea) {
+                textarea.removeAttribute('required');
+                textarea.placeholder = 'Tuliskan keterangan detail jika ditemukan kerusakan atau catatan kebersihan...';
+            }
+            if (errBox) errBox.style.display = 'none';
+        }
+
+        updateCheckedCounter();
+    }
+
     function updateCheckedCounter() {
         var inputs = document.querySelectorAll('input[id^="itemInput_"]');
         var filled = 0;
@@ -560,6 +730,7 @@
     }
 
     function previewItemPhoto(itemId, fileInput) {
+        if (isRepairModeActive()) return;
         var previewWrap = document.getElementById('photoPreview_' + itemId);
         var previewImg  = document.getElementById('photoImg_' + itemId);
         var previewName = document.getElementById('photoName_' + itemId);
@@ -586,8 +757,23 @@
         document.getElementById('helpSheet').classList.remove('open');
     }
 
-    // Validasi sebelum submit: jika masih ada item yang belum dipilih, tanyakan apakah sisanya ingin ditandai Aman
+    // Validasi sebelum submit
     document.getElementById('mobileChecklistForm')?.addEventListener('submit', function (e) {
+        if (isRepairModeActive()) {
+            var textarea = document.getElementById('catatanTextarea');
+            var errBox   = document.getElementById('notesRequiredError');
+            var val      = (textarea ? textarea.value : '').trim();
+
+            if (val === '') {
+                e.preventDefault();
+                if (errBox) errBox.style.display = 'block';
+                document.getElementById('notesBoxWrap')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                textarea?.focus();
+                return;
+            }
+            return;
+        }
+
         var inputs = document.querySelectorAll('input[id^="itemInput_"]');
         var emptyIds = [];
         inputs.forEach(function (inp) {

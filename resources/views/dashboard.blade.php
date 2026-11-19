@@ -5,6 +5,14 @@
 @if(auth()->user()->hasRole('mekanik'))
     @section('page-title', 'Rekap Perbaikan')
     @section('page-subtitle', 'Monitoring persediaan suku cadang bengkel (ABC), rekap servis armada, dan tren perbaikan dari database')
+    @section('page-actions')
+        <a href="{{ route('mekanik.inventory.request') }}"
+           class="btn btn-primary"
+           style="padding:11px 22px;font-size:14px;font-weight:700;border-radius:10px;box-shadow:0 4px 12px rgba(37,99,235,0.25)">
+            <i class="fa-solid fa-paper-plane"></i>
+            Buat Pengajuan Sparepart
+        </a>
+    @endsection
 @elseif(auth()->user()->hasRole('pengadaan'))
     @section('page-title', 'Ringkasan pengadaan')
     @section('page-subtitle', 'Pelacakan pengadaan dan permintaan')
@@ -423,6 +431,36 @@
      TAMPILAN DASHBOARD KHUSUS ROLE MEKANIK (FIGMA NODE 917-5235)
      Hanya menampilkan Persediaan Sparepart (ABC), Rekap Armada, & Tren Perbaikan
 ========================================================================= --}}
+
+{{-- Banner Aksi Cepat: Tombol Besar Pengajuan Suku Cadang & Checklist Perbaikan --}}
+<div style="background:linear-gradient(135deg, #091E3A 0%, #1D4ED8 100%);border-radius:14px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;color:#FFFFFF;box-shadow:0 6px 20px rgba(15,30,54,0.14)">
+    <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">
+            <i class="fa-solid fa-cart-plus"></i>
+        </div>
+        <div>
+            <div style="font-size:17px;font-weight:800;letter-spacing:0.01em">Pengajuan Kebutuhan Suku Cadang &amp; Stok Bengkel</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.82);margin-top:3px">
+                Ajukan permintaan sparepart untuk perawatan/perbaikan armada atau cek laporan kendaraan yang sedang Dalam Perbaikan.
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <a href="{{ route('checklists.index') }}"
+           style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.14);color:#FFFFFF;border:1px solid rgba(255,255,255,0.3);padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:700;text-decoration:none;transition:all .15s">
+            <i class="fa-solid fa-clipboard-check"></i>
+            Lihat Checklist Perbaikan
+        </a>
+
+        <a href="{{ route('mekanik.inventory.request') }}"
+           style="display:inline-flex;align-items:center;gap:10px;background:#FFFFFF;color:#091E3A;padding:13px 26px;border-radius:10px;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,0.18);transition:all .15s">
+            <i class="fa-solid fa-paper-plane" style="color:#2563EB"></i>
+            Buat Pengajuan Sekarang
+        </a>
+    </div>
+</div>
+
 <div class="mk-panel-card">
     {{-- 1. Persediaan Sparepart --}}
     <div class="mk-persediaan-bar">

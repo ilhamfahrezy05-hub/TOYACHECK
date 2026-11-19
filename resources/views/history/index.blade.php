@@ -91,6 +91,7 @@
                 <option value="">Semua Status</option>
                 <option value="aman" {{ ($filters['status'] ?? '') === 'aman' ? 'selected' : '' }}>Aman</option>
                 <option value="kendala" {{ ($filters['status'] ?? '') === 'kendala' ? 'selected' : '' }}>Kendala</option>
+                <option value="perbaikan" {{ ($filters['status'] ?? '') === 'perbaikan' ? 'selected' : '' }}>Dalam Perbaikan</option>
             </select>
         </div>
 
@@ -164,14 +165,23 @@
                         </td>
 
                         <td>
-                            <span class="badge {{ $isAman ? 'badge-success' : 'badge-danger' }}">
-                                <i class="fa-solid {{ $isAman ? 'fa-circle-check' : 'fa-triangle-exclamation' }}"></i>
-                                {{ $isAman ? 'Aman' : 'Kendala' }}
-                            </span>
+                            @if($isAman)
+                                <span class="badge badge-success">
+                                    <i class="fa-solid fa-circle-check"></i> Aman
+                                </span>
+                            @elseif($row->status === 'perbaikan')
+                                <span class="badge badge-warning">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i> Dalam Perbaikan
+                                </span>
+                            @else
+                                <span class="badge badge-danger">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Kendala
+                                </span>
+                            @endif
                         </td>
 
-                        <td style="text-align:center;font-weight:700;color:{{ $kelayakan >= 80 ? 'var(--success)' : ($kelayakan >= 50 ? 'var(--warning)' : 'var(--danger)') }}">
-                            {{ $kelayakan }}%
+                        <td style="text-align:center;font-weight:700;color:{{ $row->status === 'perbaikan' ? 'var(--warning)' : ($kelayakan >= 80 ? 'var(--success)' : ($kelayakan >= 50 ? 'var(--warning)' : 'var(--danger)')) }}">
+                            {{ $row->status === 'perbaikan' ? '—' : $kelayakan . '%' }}
                         </td>
 
                         <td style="text-align:center">

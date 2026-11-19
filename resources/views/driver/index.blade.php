@@ -136,6 +136,18 @@
                     <span>Jumlah servis berkala : <strong>{{ $vehicle->servis_count }}</strong></span>
                     <span>Jumlah kendala : <strong>{{ $vehicle->kendala_count }}</strong></span>
                 </div>
+
+                @if(!empty($vehicle->needs_recheck))
+                    <div style="margin-top:6px;display:inline-flex;align-items:center;gap:5px;background:#DBEAFE;color:#1D4ED8;border:1px solid #93C5FD;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:0.01em">
+                        <i class="fa-solid fa-rotate"></i>
+                        Lakukan Pemeriksaan Ulang
+                    </div>
+                @elseif(!empty($vehicle->in_repair_today))
+                    <div style="margin-top:6px;display:inline-flex;align-items:center;gap:5px;background:#FEF3C7;color:#B45309;border:1px solid #FCD34D;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:0.01em">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        Dalam Perbaikan
+                    </div>
+                @endif
             </div>
         </a>
     @empty

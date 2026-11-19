@@ -15,6 +15,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DriverAppController;
 use App\Http\Controllers\MekanikController;
 use App\Http\Controllers\PengadaanController;
+use App\Http\Controllers\SopController;
 
 /*
 |--------------------------------------------------------------------------
@@ -223,6 +224,13 @@ Route::middleware('auth')->group(function () {
 
         Route::patch('inspection-items/{inspection_item}/toggle', [InspectionItemController::class, 'toggle'])
             ->name('inspection-items.toggle');
+
+        // Manajemen SOP (Standar Operasional Prosedur)
+        Route::get('sop', [SopController::class, 'index'])->name('sop.index');
+        Route::get('sop/pdf', [SopController::class, 'exportPdf'])->name('sop.pdf');
+        Route::post('sop', [SopController::class, 'store'])->name('sop.store');
+        Route::put('sop/{sop}', [SopController::class, 'update'])->name('sop.update');
+        Route::delete('sop/{sop}', [SopController::class, 'destroy'])->name('sop.destroy');
     });
 
     /*
@@ -291,11 +299,17 @@ Route::middleware('auth')->group(function () {
                 ->name('notifications');
         });
 
-    // Checklist — admin (monitoring & edit hasil), driver (fisik), hse (k3)
-    Route::middleware('role:admin|driver|hse')->group(function () {
+    // Checklist — admin (monitoring & edit hasil), mekanik (read-only khusus dalam perbaikan), driver (fisik), hse (k3)
+    Route::middleware('role:admin|mekanik|driver|hse')->group(function () {
 
         Route::resource('checklists', ChecklistController::class)
-            ->only(['index', 'store', 'show']);
+            ->only(['index', 'show']);
+    });
+
+    Route::middleware('role:admin|driver|hse')->group(function () {
+
+        Route::post('checklists', [ChecklistController::class, 'store'])
+            ->name('checklists.store');
     });
 
     // Admin dapat mengedit hasil checklist armada (fisik & k3)

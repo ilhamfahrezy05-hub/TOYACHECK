@@ -24,7 +24,8 @@ class ChecklistController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
+        $user      = Auth::user();
+        $isMekanik = $user->hasRole('mekanik');
 
         // Tentukan tipe checklist yang diizinkan untuk diisi oleh user saat ini
         if ($user->hasRole('driver')) {
@@ -32,12 +33,12 @@ class ChecklistController extends Controller
         } elseif ($user->hasRole('hse')) {
             $allowedTypes = ['k3'];
         } else {
-            // Admin hanya bertugas memonitor hasil checklist, tidak menginput checklist
+            // Admin & Mekanik hanya bertugas memonitor hasil checklist (Mekanik: read-only khusus "Dalam Perbaikan")
             $allowedTypes = [];
         }
 
         $typeFilter   = $request->query('type');
-        $statusFilter = $request->query('status');
+        $statusFilter = $isMekanik ? 'perbaikan' : $request->query('status');
 
         $checklists = Checklist::with([
                 'vehicle',
@@ -45,19 +46,24 @@ class ChecklistController extends Controller
                 'user',
                 'items',
             ])
+            ->when($isMekanik, fn ($q) => $q->where('status', 'perbaikan'))
             ->when($typeFilter, fn ($q) => $q->where('checklist_type', $typeFilter))
             ->when($statusFilter, fn ($q) => $q->where('status', $statusFilter))
             ->latest('tanggal')
             ->latest('id')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         $today = now()->toDateString();
 
         $stats = [
-            'total'    => Checklist::count(),
-            'hari_ini' => Checklist::whereDate('tanggal', $today)->count(),
-            'aman'     => Checklist::where('status', 'aman')->count(),
-            'kendala'  => Checklist::where('status', 'kendala')->count(),
+            'total'     => $isMekanik ? Checklist::where('status', 'perbaikan')->count() : Checklist::count(),
+            'hari_ini'  => $isMekanik
+                ? Checklist::where('status', 'perbaikan')->whereDate('tanggal', $today)->count()
+                : Checklist::whereDate('tanggal', $today)->count(),
+            'aman'      => Checklist::where('status', 'aman')->count(),
+            'kendala'   => Checklist::where('status', 'kendala')->count(),
+            'perbaikan' => Checklist::where('status', 'perbaikan')->count(),
         ];
 
         // Daftar unit armada aktif yang dapat diperiksa
@@ -82,7 +88,6 @@ class ChecklistController extends Controller
 
         return view('checklists.index', compact(
             'checklists',
-            'vehicles',
             'stats',
             'inspectionGroups',
             'allowedTypes',

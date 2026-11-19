@@ -88,9 +88,19 @@
 @endif
 @endrole
 
+@if($checklist->status === 'perbaikan')
+    <div style="margin:14px 18px 0;padding:12px 14px;background:#FEF3C7;border:1.5px solid #F59E0B;border-radius:12px;font-size:12px;color:#92400E">
+        <div style="font-weight:800;margin-bottom:4px">
+            <i class="fa-solid fa-screwdriver-wrench" style="margin-right:4px"></i>
+            Status Pemeriksaan: Dalam Perbaikan
+        </div>
+        <div>Seluruh komponen pemeriksaan dikunci karena unit sedang dalam perbaikan.</div>
+    </div>
+@endif
+
 @if($checklist->catatan)
     <div style="margin:14px 18px 0;padding:12px 14px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;font-size:12px;color:#1E3A8A">
-        <strong>Catatan Petugas:</strong><br>
+        <strong>Catatan Keterangan Petugas:</strong><br>
         {{ $checklist->catatan }}
     </div>
 @endif

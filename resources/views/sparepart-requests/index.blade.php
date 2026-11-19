@@ -16,7 +16,7 @@
 @section('content')
 
 {{-- ── STAT CARDS ── --}}
-<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+<div class="stats-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 24px;">
 
     <div class="stat-card">
         <div class="stat-icon blue"><i class="fa-solid fa-inbox"></i></div>
@@ -46,6 +46,15 @@
     </div>
 
     <div class="stat-card">
+        <div class="stat-icon green" style="background:#ECFDF5;color:#059669"><i class="fa-solid fa-bag-shopping"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Sudah Dibeli</div>
+            <div class="stat-value">{{ $stats['purchased'] }}</div>
+            <div class="stat-change">{{ $stats['total_purchases'] }} transaksi pengadaan</div>
+        </div>
+    </div>
+
+    <div class="stat-card">
         <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
         <div class="stat-info">
             <div class="stat-label">Ditolak</div>
@@ -57,42 +66,48 @@
 </div>
 
 @php
-    $viewMode = request('view', 'cards');
+    $viewMode = request('view', 'table');
 @endphp
 
 {{-- ── HEADER KONTROL VIEW & FILTER ── --}}
 <div class="card" style="margin-bottom: 20px;">
     <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
         <div>
-            <div class="card-title">Daftar Pengajuan Suku Cadang</div>
-            <div class="card-subtitle">Total {{ $requests->total() }} pengajuan tercatat di sistem</div>
+            <div class="card-title">Daftar Pengajuan &amp; Status Pembelian Pengadaan</div>
+            <div class="card-subtitle">Total {{ $requests->total() }} pengajuan suku cadang &bull; {{ $stats['total_purchases'] }} realisasi pembelian pengadaan</div>
         </div>
 
-        <div class="d-flex align-center gap-12" style="margin-left: auto;">
-            {{-- Filter Status --}}
-            <form method="GET" action="{{ route('sparepart-requests.index') }}" class="d-flex align-center gap-8">
+        <div class="d-flex align-center gap-12 flex-wrap" style="margin-left: auto;">
+            {{-- Filter Status Persetujuan & Status Pembelian --}}
+            <form method="GET" action="{{ route('sparepart-requests.index') }}" class="d-flex align-center gap-8 flex-wrap">
                 <input type="hidden" name="view" value="{{ $viewMode }}">
-                <select name="status" class="form-control" style="width:160px;height:36px;font-size:13px" onchange="this.form.submit()">
-                    <option value="">Semua Status</option>
+                <select name="status" class="form-control" style="width:165px;height:36px;font-size:13px" onchange="this.form.submit()">
+                    <option value="">Semua Persetujuan</option>
                     <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Menunggu (Pending)</option>
                     <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Disetujui</option>
                     <option value="rejected" {{ $status === 'rejected' ? 'selected' : '' }}>Ditolak</option>
                 </select>
+
+                <select name="purchase_status" class="form-control" style="width:185px;height:36px;font-size:13px" onchange="this.form.submit()">
+                    <option value="">Semua Status Pembelian</option>
+                    <option value="sudah_dibeli" {{ ($purchaseStatus ?? '') === 'sudah_dibeli' ? 'selected' : '' }}>Sudah Dibeli / Dipenuhi</option>
+                    <option value="belum_dibeli" {{ ($purchaseStatus ?? '') === 'belum_dibeli' ? 'selected' : '' }}>Belum Dibeli</option>
+                </select>
             </form>
 
-            {{-- Toggle View (Figma Cards / Tabel) --}}
+            {{-- Toggle View (Tabel Lengkap / Kartu) --}}
             <div class="d-flex align-center" style="background:#F1F5F9;border-radius:8px;padding:3px;border:1px solid var(--border)">
+                <a href="{{ request()->fullUrlWithQuery(['view' => 'table']) }}"
+                   class="btn btn-sm {{ $viewMode === 'table' ? 'btn-primary' : 'btn-secondary' }}"
+                   style="height:30px;padding:0 12px;font-size:12px;box-shadow:none"
+                   title="Tampilan Tabel Lengkap">
+                    <i class="fa-solid fa-table-list"></i> Tabel Lengkap
+                </a>
                 <a href="{{ request()->fullUrlWithQuery(['view' => 'cards']) }}"
                    class="btn btn-sm {{ $viewMode !== 'table' ? 'btn-primary' : 'btn-secondary' }}"
                    style="height:30px;padding:0 12px;font-size:12px;box-shadow:none"
                    title="Tampilan Kartu Figma">
                     <i class="fa-solid fa-table-cells-large"></i> Kartu
-                </a>
-                <a href="{{ request()->fullUrlWithQuery(['view' => 'table']) }}"
-                   class="btn btn-sm {{ $viewMode === 'table' ? 'btn-primary' : 'btn-secondary' }}"
-                   style="height:30px;padding:0 12px;font-size:12px;box-shadow:none"
-                   title="Tampilan Tabel Data">
-                    <i class="fa-solid fa-table-list"></i> Tabel
                 </a>
             </div>
         </div>
@@ -137,6 +152,11 @@
 
                 {{-- Deskripsi Permintaan --}}
                 <div style="flex:1;min-width:260px">
+                    @php
+                        $purchase      = $req->latestPurchase;
+                        $isPurchased   = $purchase !== null;
+                        $displayVendor = $purchase?->vendor?->nama_vendor ?? $purchase?->vendor_name ?? $req->vendor_name ?: 'Belum ditentukan';
+                    @endphp
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
                         <h3 style="font-size:17px;font-weight:800;color:var(--text-primary);margin:0">
                             {{ $req->nama_sparepart }}
@@ -151,16 +171,37 @@
                         @else
                             <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> Menunggu Keputusan</span>
                         @endif
+
+                        {{-- Badge Status Pembelian Pengadaan --}}
+                        @if($isPurchased)
+                            <span class="badge badge-success" style="background:#ECFDF5;color:#059669;border:1px solid #A7F3D0">
+                                <i class="fa-solid fa-bag-shopping"></i> Sudah Dibeli / Dipenuhi ({{ $purchase->kode_pembelian }})
+                            </span>
+                        @elseif($isRejected)
+                            <span class="badge badge-neutral">
+                                <i class="fa-solid fa-ban"></i> Tidak Dibeli
+                            </span>
+                        @else
+                            <span class="badge badge-warning" style="background:#FFFBEB;color:#B45309;border:1px solid #FDE68A">
+                                <i class="fa-solid fa-hourglass-half"></i> Belum Dibeli Pengadaan
+                            </span>
+                        @endif
                     </div>
 
                     <div style="font-family:monospace;font-size:12px;color:var(--text-muted);margin-bottom:8px">
-                        {{ $kodePM }}
+                        {{ $kodePM }} &bull; Vendor: <strong style="color:var(--text-primary);font-family:inherit">{{ $displayVendor }}</strong>
                     </div>
 
                     <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.5">
                         <span style="font-weight:600;color:var(--text-primary)">Tujuan Permintaan:</span><br>
                         {{ $req->alasan ?: 'Dilakukan pergantian bagian terkait untuk memastikan kelaikan unit armada operasional distribusi.' }}
                     </div>
+
+                    @if($isPurchased)
+                        <div style="margin-top:8px;padding:8px 12px;background:#ECFDF5;border-left:3px solid #059669;border-radius:6px;font-size:12px;color:#065F46">
+                            <strong>Realisasi Pengadaan:</strong> Dibeli pada {{ $purchase->tanggal_pembelian?->translatedFormat('d M Y') }} dari <strong>{{ $displayVendor }}</strong> senilai <strong>Rp {{ number_format((float) $purchase->total_harga, 0, ',', '.') }}</strong>.
+                        </div>
+                    @endif
 
                     @if($req->catatan_admin)
                         <div style="margin-top:8px;padding:8px 12px;background:#FEF2F2;border-left:3px solid var(--danger);border-radius:6px;font-size:12px;color:#991B1B">
@@ -170,7 +211,11 @@
                 </div>
 
                 {{-- Kotak Rincian Abu-Abu (Figma Right Box) --}}
-                <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:12px;padding:16px 20px;min-width:240px;display:flex;flex-direction:column;gap:10px">
+                <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:12px;padding:16px 20px;min-width:250px;display:flex;flex-direction:column;gap:10px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px">
+                        <span style="color:var(--text-secondary)"><i class="fa-solid fa-store" style="margin-right:6px"></i> Vendor</span>
+                        <strong style="color:var(--text-primary);font-size:12.5px;text-align:right">{{ $displayVendor }}</strong>
+                    </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px">
                         <span style="color:var(--text-secondary)"><i class="fa-solid fa-box-open" style="margin-right:6px"></i> Stok Sisa</span>
                         <strong style="color:var(--text-primary);font-size:14px">{{ $req->sparepart->stok ?? 2 }}</strong>
@@ -180,8 +225,10 @@
                         <strong style="color:var(--primary);font-size:16px">{{ $req->qty }}</strong>
                     </div>
                     <div style="border-top:1px dashed var(--border);padding-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:12px">
-                        <span style="color:var(--text-muted)">Ekspektasi Pengiriman</span>
-                        <span style="font-weight:600;color:var(--text-primary)">{{ ($req->expected_delivery_date ?? $req->created_at->addDays(2))->translatedFormat('d M Y') }}</span>
+                        <span style="color:var(--text-muted)">Status Pengadaan</span>
+                        <span style="font-weight:700;color:{{ $isPurchased ? '#059669' : '#B45309' }}">
+                            {{ $isPurchased ? 'Sudah Dibeli' : ($isRejected ? 'Ditolak' : 'Belum Dibeli') }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -238,21 +285,24 @@
         @endforelse
     </div>
 @else
-    {{-- ── 2. TAMPILAN TABEL DATA TRADISIONAL ── --}}
+    {{-- ── 2. TAMPILAN TABEL LENGKAP PENGAJUAN & STATUS PENGADAAN ── --}}
     <div class="card">
         <div class="card-body-p0">
             <div class="table-wrap">
                 <table class="tc-table">
                     <thead>
                         <tr>
-                            <th style="width:52px">#</th>
-                            <th>Tanggal</th>
-                            <th>Suku Cadang</th>
-                            <th>Diajukan Oleh</th>
-                            <th>Untuk Perbaikan</th>
-                            <th>Status</th>
+                            <th style="width:48px">#</th>
+                            <th>Kode &amp; Tanggal</th>
+                            <th>Nama Barang (Sparepart)</th>
+                            <th style="text-align:center">Jumlah</th>
+                            <th>Vendor</th>
+                            <th>Untuk Armada</th>
+                            <th>Pengaju</th>
+                            <th>Status Persetujuan</th>
+                            <th>Status Pembelian Pengadaan</th>
                             @hasanyrole('admin|pengadaan')
-                            <th style="width:165px;text-align:center">Aksi</th>
+                            <th style="width:155px;text-align:center">Aksi</th>
                             @endhasanyrole
                         </tr>
                     </thead>
@@ -264,36 +314,73 @@
                                 'rejected' => ['badge-danger', 'fa-circle-xmark', 'Ditolak'],
                                 default    => ['badge-warning', 'fa-clock', 'Menunggu'],
                             };
+                            $purchase      = $req->latestPurchase;
+                            $isPurchased   = $purchase !== null;
+                            $displayVendor = $purchase?->vendor?->nama_vendor ?? $purchase?->vendor_name ?? $req->vendor_name ?: '—';
+                            $kodePM        = 'PM-' . str_pad($req->id, 6, '0', STR_PAD_LEFT);
                         @endphp
                         <tr>
                             <td style="color:var(--text-muted);font-size:12px">{{ $requests->firstItem() + $index }}</td>
                             <td style="white-space:nowrap">
-                                <div style="font-weight:600;font-size:13px">{{ $req->created_at->translatedFormat('d M Y') }}</div>
+                                <div style="font-family:monospace;font-weight:700;font-size:12px;color:var(--primary)">{{ $kodePM }}</div>
+                                <div style="font-weight:600;font-size:12.5px">{{ $req->created_at->translatedFormat('d M Y') }}</div>
                                 <div style="font-size:11px;color:var(--text-muted)">{{ $req->created_at->format('H:i') }} WIB</div>
                             </td>
-                            <td style="max-width:260px">
-                                <div style="font-weight:600">{{ $req->nama_sparepart }}
-                                    <span class="badge badge-neutral" style="font-size:11px">x{{ $req->qty }}</span>
-                                </div>
+                            <td style="max-width:240px">
+                                <div style="font-weight:700;color:var(--text-primary)">{{ $req->nama_sparepart }}</div>
                                 @if($req->alasan)
-                                    <div style="font-size:11px;color:var(--text-muted)">{{ \Illuminate\Support\Str::limit($req->alasan, 60) }}</div>
+                                    <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">{{ \Illuminate\Support\Str::limit($req->alasan, 60) }}</div>
                                 @endif
                             </td>
-                            <td style="font-weight:500">{{ $req->requester->name ?? '—' }}</td>
+                            <td style="text-align:center">
+                                <span style="background:var(--primary-subtle);color:var(--primary);padding:3px 10px;border-radius:999px;font-weight:700;font-size:12.5px">
+                                    {{ $req->qty }} pcs
+                                </span>
+                            </td>
+                            <td>
+                                <div style="font-weight:600;color:var(--text-primary)">
+                                    <i class="fa-solid fa-store" style="color:var(--text-muted);margin-right:4px;font-size:11px"></i>
+                                    {{ $displayVendor }}
+                                </div>
+                            </td>
                             <td>
                                 @if($req->maintenance)
                                     <a href="{{ route('maintenances.show', $req->maintenance_id) }}" style="font-weight:600;font-family:monospace;color:var(--primary);text-decoration:none">
                                         {{ $req->maintenance->vehicle->plat_nomor ?? '#' . $req->maintenance_id }}
                                     </a>
                                 @else
-                                    <span style="color:var(--text-muted)">—</span>
+                                    <span style="color:var(--text-muted)">Stok Bengkel</span>
                                 @endif
                             </td>
+                            <td style="font-weight:500">{{ $req->requester->name ?? '—' }}</td>
                             <td>
                                 <span class="badge {{ $meta[0] }}"><i class="fa-solid {{ $meta[1] }}"></i> {{ $meta[2] }}</span>
                                 @if($req->catatan_admin)
-                                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;max-width:200px">
+                                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;max-width:180px">
                                         <i class="fa-regular fa-comment"></i> {{ $req->catatan_admin }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td>
+                                @if($isPurchased)
+                                    <span class="badge badge-success" style="background:#ECFDF5;color:#059669;border:1px solid #A7F3D0">
+                                        <i class="fa-solid fa-bag-shopping"></i> Sudah Dibeli / Dipenuhi
+                                    </span>
+                                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.4">
+                                        <strong>{{ $purchase->kode_pembelian }}</strong> &bull;
+                                        Rp {{ number_format((float) $purchase->total_harga, 0, ',', '.') }}<br>
+                                        <span style="color:var(--text-muted)">Tgl Beli: {{ $purchase->tanggal_pembelian?->format('d/m/y') }}</span>
+                                    </div>
+                                @elseif($req->status === 'rejected')
+                                    <span class="badge badge-neutral">
+                                        <i class="fa-solid fa-ban"></i> Tidak Dibeli
+                                    </span>
+                                @else
+                                    <span class="badge badge-warning" style="background:#FFFBEB;color:#B45309;border:1px solid #FDE68A">
+                                        <i class="fa-solid fa-hourglass-half"></i> Belum Dibeli
+                                    </span>
+                                    <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+                                        {{ $req->status === 'approved' ? 'Dalam proses pengadaan' : 'Menunggu persetujuan' }}
                                     </div>
                                 @endif
                             </td>
@@ -350,7 +437,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7">
+                            <td colspan="10">
                                 <div class="empty-state">
                                     <div class="empty-icon"><i class="fa-solid fa-inbox"></i></div>
                                     <div class="empty-title">Belum Ada Permintaan</div>
@@ -373,6 +460,105 @@
     </div>
 </div>
 @endif
+
+{{-- ── 3. TABEL LENGKAP REALISASI PEMBELIAN DARI PENGADAAN ── --}}
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">
+                <i class="fa-solid fa-cart-flatbed" style="color:var(--primary);margin-right:8px"></i>
+                Riwayat &amp; Status Realisasi Pembelian dari Pengadaan
+            </div>
+            <div class="card-subtitle">Keterangan lengkap barang yang telah dibeli/dipenuhi oleh tim Pengadaan beserta vendor, jumlah, dan nominal transaksi</div>
+        </div>
+    </div>
+
+    <div class="card-body-p0">
+        <div class="table-wrap">
+            <table class="tc-table">
+                <thead>
+                    <tr>
+                        <th style="width:48px">#</th>
+                        <th>Kode Pembelian</th>
+                        <th>Tanggal Beli</th>
+                        <th>Nama Barang / Suku Cadang</th>
+                        <th style="text-align:center">Jumlah</th>
+                        <th>Vendor</th>
+                        <th>Total Harga</th>
+                        <th>Petugas Pengadaan</th>
+                        <th>Status Pengadaan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($purchases ?? [] as $idx => $p)
+                    @php
+                        $itemNames = $p->items->pluck('nama_sparepart')->filter()->join(', ');
+                        $itemSkus  = $p->items->pluck('kode_barang')->filter()->join(', ');
+                        $totalQty  = $p->items->sum('qty');
+                        $vName     = $p->vendor->nama_vendor ?? $p->vendor_name ?: '—';
+                    @endphp
+                    <tr>
+                        <td style="color:var(--text-muted);font-size:12px">{{ $idx + 1 }}</td>
+                        <td>
+                            <span style="font-family:monospace;font-weight:700;color:var(--primary);background:var(--primary-subtle);padding:3px 8px;border-radius:6px;font-size:12px">
+                                {{ $p->kode_pembelian }}
+                            </span>
+                        </td>
+                        <td style="white-space:nowrap">
+                            <div style="font-weight:600;font-size:13px">{{ $p->tanggal_pembelian?->translatedFormat('d M Y') ?? '—' }}</div>
+                            <div style="font-size:11px;color:var(--text-muted)">{{ $p->waktu_pembelian ?? '-' }} WIB</div>
+                        </td>
+                        <td>
+                            <div style="font-weight:700;color:var(--text-primary)">
+                                {{ $itemNames ?: ($p->sparepartRequest->nama_sparepart ?? 'Pembelian Sparepart') }}
+                            </div>
+                            @if($itemSkus)
+                                <div style="font-family:monospace;font-size:11px;color:var(--text-muted)">SKU: {{ $itemSkus }}</div>
+                            @endif
+                            @if($p->catatan)
+                                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px">{{ \Illuminate\Support\Str::limit($p->catatan, 65) }}</div>
+                            @endif
+                        </td>
+                        <td style="text-align:center">
+                            <span style="font-weight:700;color:var(--text-primary);background:#F1F5F9;padding:3px 10px;border-radius:999px;font-size:12.5px">
+                                {{ $totalQty ?: ($p->sparepartRequest->qty ?? 1) }} pcs
+                            </span>
+                        </td>
+                        <td>
+                            <div style="font-weight:600;color:var(--text-primary)">
+                                <i class="fa-solid fa-store" style="color:var(--primary);margin-right:5px;font-size:11.5px"></i>
+                                {{ $vName }}
+                            </div>
+                        </td>
+                        <td style="font-weight:700;color:var(--text-primary);white-space:nowrap">
+                            Rp {{ number_format((float) $p->total_harga, 0, ',', '.') }}
+                        </td>
+                        <td>
+                            <div style="font-weight:500">{{ $p->user->name ?? 'Tim Pengadaan' }}</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-success" style="background:#ECFDF5;color:#059669;border:1px solid #A7F3D0">
+                                <i class="fa-solid fa-circle-check"></i>
+                                {{ $p->status_pembelian === 'selesai' ? 'Sudah Dibeli / Dipenuhi' : ucfirst($p->status_pembelian) }}
+                            </span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+                                <div class="empty-title">Belum Ada Realisasi Pembelian</div>
+                                <div class="empty-text">Transaksi pembelian yang dicatat oleh tim Pengadaan akan tampil di sini.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 @endsection
 

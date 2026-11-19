@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SparepartRequest extends Model
 {
@@ -51,6 +53,16 @@ class SparepartRequest extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(Purchase::class, 'sparepart_request_id');
+    }
+
+    public function latestPurchase(): HasOne
+    {
+        return $this->hasOne(Purchase::class, 'sparepart_request_id')->latestOfMany();
     }
 
     public function isPending(): bool

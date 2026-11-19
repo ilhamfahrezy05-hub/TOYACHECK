@@ -77,11 +77,12 @@
 @section('content')
 
 @php
-    $isAman    = $checklist->status === 'aman';
-    $totalItem = $checklist->items->count();
-    $badItem   = $checklist->items->where('kondisi', false)->count();
-    $okItem    = $totalItem - $badItem;
-    $percent   = $totalItem > 0 ? round(($okItem / $totalItem) * 100) : 0;
+    $isAman      = $checklist->status === 'aman';
+    $isPerbaikan = $checklist->status === 'perbaikan';
+    $totalItem   = $checklist->items->count();
+    $badItem     = $checklist->items->where('kondisi', false)->count();
+    $okItem      = $totalItem - $badItem;
+    $percent     = $totalItem > 0 ? round(($okItem / $totalItem) * 100) : 0;
 
     // Item bermasalah ditampilkan paling atas
     $sortedItems = $checklist->items->sortBy(fn ($i) => $i->kondisi ? 1 : 0)->values();
@@ -91,19 +92,29 @@
 {{-- ── Banner status ── --}}
 <div style="
     display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:12px;margin-bottom:20px;
-    background:{{ $isAman ? 'var(--success-bg)' : 'var(--danger-bg)' }};
-    color:{{ $isAman ? 'var(--success)' : 'var(--danger)' }}">
+    background:{{ $isAman ? 'var(--success-bg)' : ($isPerbaikan ? 'var(--warning-bg)' : 'var(--danger-bg)') }};
+    color:{{ $isAman ? 'var(--success)' : ($isPerbaikan ? 'var(--warning)' : 'var(--danger)') }}">
     <div style="font-size:26px">
-        <i class="fa-solid {{ $isAman ? 'fa-circle-check' : 'fa-triangle-exclamation' }}"></i>
+        <i class="fa-solid {{ $isAman ? 'fa-circle-check' : ($isPerbaikan ? 'fa-screwdriver-wrench' : 'fa-triangle-exclamation') }}"></i>
     </div>
     <div>
         <div style="font-size:15px;font-weight:700">
-            {{ $isAman ? 'Armada dalam kondisi aman' : 'Ditemukan kendala pada armada' }}
+            @if($isAman)
+                Armada dalam kondisi aman
+            @elseif($isPerbaikan)
+                Armada dilaporkan Dalam Perbaikan
+            @else
+                Ditemukan kendala pada armada
+            @endif
         </div>
         <div style="font-size:13px;opacity:.85">
-            {{ $isAman
-                ? 'Seluruh item pemeriksaan dinyatakan baik.'
-                : $badItem . ' dari ' . $totalItem . ' item pemeriksaan bermasalah dan memerlukan perbaikan/maintenance.' }}
+            @if($isAman)
+                Seluruh item pemeriksaan dinyatakan baik.
+            @elseif($isPerbaikan)
+                Driver memilih status "Dalam Perbaikan" (seluruh komponen pemeriksaan dikunci). Lihat catatan keterangan di bawah.
+            @else
+                {{ $badItem }} dari {{ $totalItem }} item pemeriksaan bermasalah dan memerlukan perbaikan/maintenance.
+            @endif
         </div>
     </div>
 </div>
@@ -175,10 +186,19 @@
             <div class="ck-meta-row">
                 <span class="ck-meta-key">Status</span>
                 <span class="ck-meta-val">
-                    <span class="badge {{ $isAman ? 'badge-success' : 'badge-danger' }}">
-                        <i class="fa-solid {{ $isAman ? 'fa-circle-check' : 'fa-triangle-exclamation' }}"></i>
-                        {{ $isAman ? 'Aman' : 'Kendala' }}
-                    </span>
+                    @if($isAman)
+                        <span class="badge badge-success">
+                            <i class="fa-solid fa-circle-check"></i> Aman
+                        </span>
+                    @elseif($isPerbaikan)
+                        <span class="badge badge-warning">
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Dalam Perbaikan
+                        </span>
+                    @else
+                        <span class="badge badge-danger">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Kendala
+                        </span>
+                    @endif
                 </span>
             </div>
 
@@ -252,11 +272,27 @@
                     @endif
                 </div>
             @empty
+                @if($isPerbaikan)
+                <div class="empty-state" style="padding:36px 24px">
+                    <div class="empty-icon" style="color:var(--warning)"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <div class="empty-title">Unit Sedang Dalam Perbaikan</div>
+                    <div class="empty-text" style="max-width:460px;margin:6px auto 14px">
+                        Seluruh komponen pemeriksaan dikunci saat Driver memilih mode <strong>Dalam Perbaikan</strong>.
+                    </div>
+                    @if($checklist->catatan)
+                        <div style="max-width:520px;margin:0 auto;text-align:left;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 16px;font-size:13.5px;color:#92400E">
+                            <div style="font-weight:700;margin-bottom:4px"><i class="fa-solid fa-comment-dots"></i> Keterangan Driver:</div>
+                            <div>{{ $checklist->catatan }}</div>
+                        </div>
+                    @endif
+                </div>
+                @else
                 <div class="empty-state">
                     <div class="empty-icon"><i class="fa-solid fa-clipboard-question"></i></div>
                     <div class="empty-title">Tidak Ada Item</div>
                     <div class="empty-text">Checklist ini tidak memiliki item pemeriksaan.</div>
                 </div>
+                @endif
             @endforelse
         </div>
     </div>

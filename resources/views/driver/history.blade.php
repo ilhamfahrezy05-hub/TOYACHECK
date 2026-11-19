@@ -77,8 +77,9 @@
         padding: 3px 9px;
         border-radius: 999px;
     }
-    .m-badge-status.aman    { background: #DCFCE7; color: #166534; }
-    .m-badge-status.kendala { background: #FEE2E2; color: #991B1B; }
+    .m-badge-status.aman      { background: #DCFCE7; color: #166534; }
+    .m-badge-status.kendala   { background: #FEE2E2; color: #991B1B; }
+    .m-badge-status.perbaikan { background: #FEF3C7; color: #92400E; }
 </style>
 @endpush
 
@@ -131,8 +132,13 @@
 
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                     <span class="m-badge-status {{ $row->status }}">
-                        <i class="fa-solid {{ $row->status === 'aman' ? 'fa-circle-check' : 'fa-triangle-exclamation' }}"></i>
-                        {{ $row->status === 'aman' ? 'Aman' : $badCount . ' Kendala' }}
+                        @if($row->status === 'aman')
+                            <i class="fa-solid fa-circle-check"></i> Aman
+                        @elseif($row->status === 'perbaikan')
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Dalam Perbaikan
+                        @else
+                            <i class="fa-solid fa-triangle-exclamation"></i> {{ $badCount }} Kendala
+                        @endif
                     </span>
 
                     <span style="font-size:10px;font-weight:700;color:#4B5563;background:#FFFFFF;padding:2px 8px;border-radius:999px">

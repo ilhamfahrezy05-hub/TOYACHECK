@@ -154,21 +154,25 @@ class PurchaseSeeder extends Seeder
             ],
         ];
 
-        foreach ($samplePurchases as $pData) {
-            $vendor = Vendor::where('nama_vendor', $pData['vendor_name'])->first();
-            $sp     = Sparepart::first();
+        $approvedRequests = SparepartRequest::where('status', SparepartRequest::STATUS_APPROVED)->orderBy('id')->get()->values();
+
+        foreach ($samplePurchases as $idx => $pData) {
+            $vendor     = Vendor::where('nama_vendor', $pData['vendor_name'])->first();
+            $sp         = Sparepart::first();
+            $matchedReq = $approvedRequests->get($idx);
 
             $purchase = Purchase::updateOrCreate(
                 ['kode_pembelian' => $pData['kode_pembelian']],
                 [
-                    'user_id'           => $pengadaan?->id,
-                    'vendor_id'         => $vendor?->id,
-                    'vendor_name'       => $pData['vendor_name'],
-                    'tanggal_pembelian' => $pData['tanggal_pembelian'],
-                    'waktu_pembelian'   => $pData['waktu_pembelian'],
-                    'total_harga'       => $pData['total_harga'],
-                    'catatan'           => $pData['catatan'],
-                    'status_pembelian'  => 'selesai',
+                    'user_id'              => $pengadaan?->id,
+                    'vendor_id'            => $vendor?->id,
+                    'vendor_name'          => $pData['vendor_name'],
+                    'sparepart_request_id' => $matchedReq?->id,
+                    'tanggal_pembelian'    => $pData['tanggal_pembelian'],
+                    'waktu_pembelian'      => $pData['waktu_pembelian'],
+                    'total_harga'          => $pData['total_harga'],
+                    'catatan'              => $pData['catatan'],
+                    'status_pembelian'     => 'selesai',
                 ]
             );
 

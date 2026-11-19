@@ -626,9 +626,15 @@
         <table class="k3-meta-grid">
             <tr>
                 <td style="width:18%;">Kendaraan Milik</td>
-                <td style="width:34%;">: <u>Internal</u> / <s style="color:#6b7280;">Eksternal*</s> <span style="font-weight:500;font-size:7.5px;">(coret salah satu)</span></td>
+                <td style="width:34%;">
+                    @if(($v->kepemilikan ?? 'internal') === 'eksternal')
+                        : <s style="color:#6b7280;">Internal</s> / <u>Eksternal*</u> <span style="font-weight:500;font-size:7.5px;">(coret salah satu)</span>
+                    @else
+                        : <u>Internal</u> / <s style="color:#6b7280;">Eksternal*</s> <span style="font-weight:500;font-size:7.5px;">(coret salah satu)</span>
+                    @endif
+                </td>
                 <td style="width:12%;">Ekspedisi</td>
-                <td style="width:36%;">: <span class="k3-meta-line">PT. Toyamilindo (Internal)</span></td>
+                <td style="width:36%;">: <span class="k3-meta-line">PT. Toyamilindo ({{ ($v->kepemilikan ?? 'internal') === 'eksternal' ? 'Eksternal' : 'Internal' }})</span></td>
             </tr>
             <tr>
                 <td>Nomor Kendaraan</td>

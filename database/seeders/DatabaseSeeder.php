@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             SparepartSeeder::class,
             VendorSeeder::class,
             PurchaseSeeder::class,
+            SopSeeder::class,
         ]);
     }
 }

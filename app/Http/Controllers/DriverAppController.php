@@ -96,10 +96,26 @@ class DriverAppController extends Controller
             })
             ->withCount([
                 'maintenances as servis_count',
-                'checklists as kendala_count' => fn ($q) => $q->where('status', 'kendala'),
+                'checklists as kendala_count' => fn ($q) => $q->whereIn('status', ['kendala', 'perbaikan']),
             ])
             ->orderBy('plat_nomor')
             ->get();
+
+        // Cek checklist fisik terakhir hari ini untuk mendeteksi skenario "Lakukan Pemeriksaan Ulang" di hari yang sama
+        $today = now()->toDateString();
+        $todayFisikByVehicle = Checklist::where('checklist_type', 'fisik')
+            ->whereDate('tanggal', $today)
+            ->orderBy('id', 'desc')
+            ->get()
+            ->unique('vehicle_id')
+            ->keyBy('vehicle_id');
+
+        foreach ($vehicles as $v) {
+            $latestToday = $todayFisikByVehicle->get($v->id);
+            // Jika hari ini sempat dilaporkan "Dalam Perbaikan" (status = perbaikan) dan di hari yang sama armada sudah selesai diperbaiki (siap_jalan)
+            $v->needs_recheck   = $latestToday && $latestToday->status === 'perbaikan' && $v->status === Vehicle::STATUS_SIAP_JALAN;
+            $v->in_repair_today = $latestToday && $latestToday->status === 'perbaikan' && $v->status !== Vehicle::STATUS_SIAP_JALAN;
+        }
 
         return view('driver.index', compact(
             'vehicles',
@@ -247,6 +263,37 @@ class DriverAppController extends Controller
         // Pastikan HSE hanya menyimpan laporan K3 (Driver tetap bisa Fisik & K3 sementara)
         if ($user->hasRole('hse') && $type !== 'k3') {
             abort(403, 'Role K3/HSE hanya dapat mengirim laporan K3.');
+        }
+
+        $isDalamPerbaikan = $type === 'fisik' && (string) $request->input('dalam_perbaikan') === '1';
+
+        if ($isDalamPerbaikan) {
+            $validated = $request->validate([
+                'catatan' => 'required|string|max:1000',
+            ], [
+                'catatan.required' => 'Catatan keterangan wajib diisi apabila kendaraan sedang Dalam Perbaikan.',
+            ]);
+
+            $checklist = DB::transaction(function () use ($validated, $vehicle, $type, $user) {
+                $created = Checklist::create([
+                    'vehicle_id'     => $vehicle->id,
+                    'checklist_type' => $type,
+                    'driver_id'      => $user->id,
+                    'user_id'        => $user->id,
+                    'tanggal'        => now(),
+                    'status'         => 'perbaikan',
+                    'catatan'        => trim($validated['catatan']),
+                ]);
+
+                $vehicle->update(['status' => Vehicle::STATUS_MAINTENANCE]);
+
+                return $created;
+            });
+
+            return redirect()
+                ->route('driver.vehicle.show', $vehicle->id)
+                ->with('success', "Unit {$vehicle->plat_nomor} berhasil dilaporkan Dalam Perbaikan. Informasi telah diteruskan ke Mekanik & Admin Distribusi.")
+                ->with('last_checklist_id', $checklist->id);
         }
 
         $validated = $request->validate([

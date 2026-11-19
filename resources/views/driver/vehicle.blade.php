@@ -307,12 +307,29 @@
                 </a>
             @else
                 {{-- Role Driver: Tetap menampilkan CEK FISIK dan CEK K3 --}}
+                @php
+                    $isRecheckToday = $todayFisik && $todayFisik->status === 'perbaikan' && $vehicle->status === 'siap_jalan';
+                    $isRepairToday  = $todayFisik && $todayFisik->status === 'perbaikan' && $vehicle->status !== 'siap_jalan';
+                @endphp
                 <a href="{{ route('driver.checklist.form', [$vehicle->id, 'fisik']) }}"
-                   class="m-btn-cek fisik {{ $todayFisik ? 'done' : '' }}">
-                    @if($todayFisik)
-                        <i class="fa-solid fa-circle-check"></i>
+                   class="m-btn-cek fisik {{ ($todayFisik && !$isRecheckToday && !$isRepairToday) ? 'done' : '' }}"
+                   @if($isRecheckToday)
+                       style="background:#2563EB;color:#FFFFFF;border-color:#1D4ED8;"
+                   @elseif($isRepairToday)
+                       style="background:#FEF3C7;color:#B45309;border-color:#F59E0B;"
+                   @endif>
+                    @if($isRecheckToday)
+                        <i class="fa-solid fa-rotate"></i>
+                        LAKUKAN PEMERIKSAAN ULANG
+                    @elseif($isRepairToday)
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        DALAM PERBAIKAN
+                    @else
+                        @if($todayFisik)
+                            <i class="fa-solid fa-circle-check"></i>
+                        @endif
+                        CEK FISIK
                     @endif
-                    CEK FISIK
                 </a>
 
                 <a href="{{ route('driver.checklist.form', [$vehicle->id, 'k3']) }}"

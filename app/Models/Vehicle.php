@@ -21,10 +21,19 @@ class Vehicle extends Model
         self::STATUS_NONAKTIF    => 'Nonaktif',
     ];
 
+    public const KEPEMILIKAN_INTERNAL  = 'internal';
+    public const KEPEMILIKAN_EKSTERNAL = 'eksternal';
+
+    public const KEPEMILIKAN_LABELS = [
+        self::KEPEMILIKAN_INTERNAL  => 'Internal',
+        self::KEPEMILIKAN_EKSTERNAL => 'Eksternal',
+    ];
+
     protected $fillable = [
         'plat_nomor',
         'merk',
         'jenis_kendaraan',
+        'kepemilikan',
         'tahun',
         'dimensi_box',
         'tahun_stnk',

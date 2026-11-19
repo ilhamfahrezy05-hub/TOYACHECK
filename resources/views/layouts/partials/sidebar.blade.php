@@ -37,6 +37,19 @@
             Log Perbaikan
         </a>
 
+        @php
+            $perbaikanChecklistCount = \App\Models\Checklist::where('status', 'perbaikan')->count();
+        @endphp
+        <a href="{{ route('checklists.index') }}"
+           class="nav-item {{ request()->routeIs('checklists.*') ? 'active' : '' }}"
+           id="nav-mekanik-checklists">
+            <span class="nav-icon"><i class="fa-solid fa-clipboard-check"></i></span>
+            Checklist Perbaikan
+            @if($perbaikanChecklistCount > 0)
+                <span class="nav-badge">{{ $perbaikanChecklistCount }}</span>
+            @endif
+        </a>
+
         <a href="{{ route('mekanik.master-data') }}"
            class="nav-item {{ request()->routeIs('mekanik.master-data*') ? 'active' : '' }}"
            id="nav-master-data">
@@ -117,11 +130,11 @@
             @endif
         </a>
 
-        <a href="{{ route('vendors.index') }}"
-           class="nav-item {{ request()->routeIs('vendors.*') ? 'active' : '' }}"
-           id="nav-vendor">
-            <span class="nav-icon"><i class="fa-solid fa-store"></i></span>
-            Vendor
+        <a href="{{ route('sop.index') }}"
+           class="nav-item {{ request()->routeIs('sop.*') ? 'active' : '' }}"
+           id="nav-sop">
+            <span class="nav-icon"><i class="fa-solid fa-book-open"></i></span>
+            SOP
         </a>
         @endrole
 

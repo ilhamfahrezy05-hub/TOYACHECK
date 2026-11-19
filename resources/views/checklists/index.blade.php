@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Checklist Armada')
-@section('page-title', 'Checklist Armada')
-@section('page-subtitle', 'Pemeriksaan kondisi kendaraan sebelum beroperasi')
+@section('title', auth()->user()->hasRole('mekanik') ? 'Checklist Perbaikan' : 'Checklist Armada')
+@section('page-title', auth()->user()->hasRole('mekanik') ? 'Checklist Perbaikan Armada' : 'Checklist Armada')
+@section('page-subtitle', auth()->user()->hasRole('mekanik') ? 'Informasi hasil pemeriksaan Driver yang melaporkan unit Dalam Perbaikan (Read-Only)' : 'Pemeriksaan kondisi kendaraan sebelum beroperasi')
 
 {{-- ===================== PAGE ACTIONS ===================== --}}
 @section('page-actions')
@@ -116,7 +116,28 @@
 @endphp
 
 {{-- ── STAT CARDS ── --}}
-<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr)">
+@if(auth()->user()->hasRole('mekanik'))
+<div class="stats-grid" style="grid-template-columns: repeat(2, 1fr)">
+    <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Total Laporan Dalam Perbaikan</div>
+            <div class="stat-value">{{ $stats['perbaikan'] ?? $stats['total'] }}</div>
+            <div class="stat-change">Hasil pemeriksaan driver (Mode Dalam Perbaikan)</div>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon violet"><i class="fa-solid fa-calendar-day"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Laporan Hari Ini</div>
+            <div class="stat-value">{{ $stats['hari_ini'] }}</div>
+            <div class="stat-change">{{ now()->translatedFormat('d M Y') }}</div>
+        </div>
+    </div>
+</div>
+@else
+<div class="stats-grid" style="grid-template-columns: repeat(5, 1fr)">
 
     <div class="stat-card">
         <div class="stat-icon blue"><i class="fa-solid fa-clipboard-list"></i></div>
@@ -154,13 +175,25 @@
         </div>
     </div>
 
+    <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Dalam Perbaikan</div>
+            <div class="stat-value">{{ $stats['perbaikan'] ?? 0 }}</div>
+            <div class="stat-change">Unit tidak beroperasi</div>
+        </div>
+    </div>
+
 </div>
+@endif
 
 {{-- ── TABLE CARD ── --}}
 <div class="card">
     <div class="card-header">
         <div>
-            <div class="card-title">Riwayat Checklist</div>
+            <div class="card-title">
+                {{ auth()->user()->hasRole('mekanik') ? 'Daftar Pemeriksaan Driver — Dalam Perbaikan' : 'Riwayat Checklist' }}
+            </div>
             <div class="card-subtitle">Total {{ $checklists->total() }} pemeriksaan tercatat</div>
         </div>
 
@@ -177,17 +210,20 @@
                     oninput="applyChecklistFilter()">
             </div>
 
+            @unless(auth()->user()->hasRole('mekanik'))
             <select id="checklistTypeFilter" class="form-control" style="width:130px" onchange="applyChecklistFilter()">
                 <option value="">Semua Tipe</option>
                 <option value="fisik">Fisik</option>
                 <option value="k3">K3 & Safety</option>
             </select>
 
-            <select id="checklistStatusFilter" class="form-control" style="width:140px" onchange="applyChecklistFilter()">
+            <select id="checklistStatusFilter" class="form-control" style="width:165px" onchange="applyChecklistFilter()">
                 <option value="">Semua Status</option>
                 <option value="aman">Aman</option>
                 <option value="kendala">Kendala</option>
+                <option value="perbaikan">Dalam Perbaikan</option>
             </select>
+            @endunless
         </div>
     </div>
 
@@ -201,7 +237,7 @@
                         <th>Tipe</th>
                         <th>Armada</th>
                         <th>Petugas</th>
-                        <th>Item Diperiksa</th>
+                        <th>Item / Catatan Keterangan</th>
                         <th>Status</th>
                         <th style="width:90px;text-align:center">Aksi</th>
                     </tr>
@@ -209,9 +245,10 @@
                 <tbody id="checklistTableBody">
                     @forelse ($checklists as $index => $checklist)
                     @php
-                        $totalItem  = $checklist->items->count();
-                        $badItem    = $checklist->items->where('kondisi', false)->count();
-                        $isAman     = $checklist->status === 'aman';
+                        $totalItem   = $checklist->items->count();
+                        $badItem     = $checklist->items->where('kondisi', false)->count();
+                        $isAman      = $checklist->status === 'aman';
+                        $isPerbaikan = $checklist->status === 'perbaikan';
                         $petugasNama = $checklist->driver->name ?? $checklist->user->name ?? '—';
                     @endphp
                     <tr
@@ -265,22 +302,47 @@
                             {{ $petugasNama }}
                         </td>
 
-                        {{-- Item --}}
-                        <td style="font-size:13px;color:var(--text-secondary)">
-                            {{ $totalItem - $badItem }}/{{ $totalItem }} baik
-                            @if($badItem > 0)
-                                <span style="color:var(--danger);font-weight:600">
-                                    · {{ $badItem }} bermasalah
-                                </span>
+                        {{-- Item / Catatan Keterangan --}}
+                        <td style="font-size:13px;color:var(--text-secondary);max-width:300px">
+                            @if($isPerbaikan)
+                                <div style="font-weight:700;color:#B45309;font-size:12px">
+                                    <i class="fa-solid fa-lock" style="margin-right:4px"></i> Komponen Dikunci (Dalam Perbaikan)
+                                </div>
+                                @if($checklist->catatan)
+                                    <div style="font-size:12px;color:var(--text-primary);margin-top:3px;background:#FFFBEB;border:1px solid #FDE68A;padding:5px 8px;border-radius:6px">
+                                        <strong>Keterangan Driver:</strong> {{ $checklist->catatan }}
+                                    </div>
+                                @endif
+                            @else
+                                {{ $totalItem - $badItem }}/{{ $totalItem }} baik
+                                @if($badItem > 0)
+                                    <span style="color:var(--danger);font-weight:600">
+                                        · {{ $badItem }} bermasalah
+                                    </span>
+                                @endif
+                                @if($checklist->catatan)
+                                    <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">
+                                        <i class="fa-regular fa-comment"></i> {{ \Illuminate\Support\Str::limit($checklist->catatan, 65) }}
+                                    </div>
+                                @endif
                             @endif
                         </td>
 
                         {{-- Status --}}
                         <td>
-                            <span class="badge {{ $isAman ? 'badge-success' : 'badge-danger' }}">
-                                <i class="fa-solid {{ $isAman ? 'fa-circle-check' : 'fa-triangle-exclamation' }}"></i>
-                                {{ $isAman ? 'Aman' : 'Kendala' }}
-                            </span>
+                            @if($isAman)
+                                <span class="badge badge-success">
+                                    <i class="fa-solid fa-circle-check"></i> Aman
+                                </span>
+                            @elseif($isPerbaikan)
+                                <span class="badge badge-warning">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i> Dalam Perbaikan
+                                </span>
+                            @else
+                                <span class="badge badge-danger">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Kendala
+                                </span>
+                            @endif
                         </td>
 
                         {{-- Aksi --}}
