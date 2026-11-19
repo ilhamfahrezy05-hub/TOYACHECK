@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Controller Aplikasi Mobile Driver & HSE (Figma Mobile Match).
  * Menangani alur:
- * 1. Scan QR Code di truk -> masuk ke aplikasi mobile (/m/qr/{kode_armada})
+ * 1. Scan QR Code di truk -> masuk ke aplikasi mobile (/m/qr/{code})
  * 2. Login mobile (ID Karyawan / Username + Password)
  * 3. Pilih Kendaraan (/driver) -> Daftar armada aktif
  * 4. Detail Kendaraan (/driver/vehicles/{vehicle}) -> Driver: CEK FISIK | HSE: CEK K3 + Export PDF

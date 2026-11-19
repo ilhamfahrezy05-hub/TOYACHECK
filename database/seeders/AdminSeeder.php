@@ -17,10 +17,10 @@ class AdminSeeder extends Seeder
         // [username, NIK, nama, password awal, role]
         $accounts = [
             ['distributor2', 'EMP-0001', 'Admin Distribusi',          'Admin123!',     'admin'],
-            ['driver1',      'EMP-0002', 'Budi Driver',               'Driver123!',    'driver'],
+            ['driver1',      'EMP-0002', 'Zidni Driver',               'Driver123!',    'driver'],
             ['hse1',         'EMP-0003', 'Siti Rahma (HSE)',          'Hse123!',       'hse'],
-            ['mekanik1',     'EMP-0004', 'Joko Bengkel (Mekanik)',    'Mekanik123!',   'mekanik'],
-            ['pengadaan1',   'EMP-0005', 'Rian Logistik (Pengadaan)', 'Pengadaan123!', 'pengadaan'],
+            ['mekanik1',     'EMP-0004', 'Ilham Bengkel (Mekanik)',    'Mekanik123!',   'mekanik'],
+            ['pengadaan1',   'EMP-0005', 'Renal Logistik (Pengadaan)', 'Pengadaan123!', 'pengadaan'],
         ];
 
         foreach ($accounts as [$username, $nik, $name, $password, $role]) {

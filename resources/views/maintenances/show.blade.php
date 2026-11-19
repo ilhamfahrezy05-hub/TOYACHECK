@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Perbaikan — ' . ($maintenance->vehicle->kode_armada ?? 'Armada'))
+@section('title', 'Detail Perbaikan — ' . ($maintenance->vehicle->plat_nomor ?? 'Armada'))
 @section('page-title', 'Detail Catatan Perbaikan')
-@section('page-subtitle', 'Lembar kerja servis unit ' . ($maintenance->vehicle->kode_armada ?? 'armada') . ' (' . ($maintenance->vehicle->plat_nomor ?? '-') . ')')
+@section('page-subtitle', 'Lembar kerja servis unit ' . ($maintenance->vehicle->plat_nomor ?? 'armada') . ' (' . ($maintenance->vehicle->merk ?? '-') . ')')
 
 {{-- ===================== PAGE ACTIONS ===================== --}}
 @section('page-actions')
@@ -168,13 +168,6 @@
         </div>
 
         <div style="padding:6px 20px 16px">
-
-            <div class="mnt-meta-row">
-                <span class="mnt-meta-key">Kode Armada</span>
-                <span class="mnt-meta-val" style="font-family:monospace;font-size:14px">
-                    {{ $maintenance->vehicle->kode_armada ?? '—' }}
-                </span>
-            </div>
 
             <div class="mnt-meta-row">
                 <span class="mnt-meta-key">Plat Nomor</span>

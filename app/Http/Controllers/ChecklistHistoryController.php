@@ -23,8 +23,6 @@ class ChecklistHistoryController extends Controller
             ->paginate(auth()->user()->perPage())
             ->withQueryString();
 
-        $vehicles = Vehicle::orderBy('kode_armada')->get();
-
         // Ringkasan dihitung dari hasil filter yang sama (tanpa pagination)
         $summaryQuery = $this->filteredQuery($request);
         $stats = [
@@ -33,9 +31,10 @@ class ChecklistHistoryController extends Controller
             'kendala' => (clone $summaryQuery)->where('status', 'kendala')->count(),
         ];
 
+        $vehicles = Vehicle::orderBy('plat_nomor')->get();
         $filters = $request->only(['dari', 'sampai', 'vehicle_id', 'type', 'status']);
 
-        return view('history.index', compact('checklists', 'vehicles', 'stats', 'filters'));
+        return view('history.index', compact('checklists', 'stats', 'filters', 'vehicles'));
     }
 
     public function exportPdf(Request $request)
@@ -48,8 +47,8 @@ class ChecklistHistoryController extends Controller
         } else {
             $vehicleIds = $filtered->pluck('vehicle_id')->filter()->unique()->values();
             $vehicles = $vehicleIds->isNotEmpty()
-                ? Vehicle::whereIn('id', $vehicleIds)->orderBy('kode_armada')->get()
-                : Vehicle::orderBy('kode_armada')->get();
+                ? Vehicle::whereIn('id', $vehicleIds)->orderBy('plat_nomor')->get()
+                : Vehicle::orderBy('plat_nomor')->get();
         }
 
         $sheets = $this->buildMonthlyVehicleSheets($vehicles, $bulan);
@@ -373,7 +372,7 @@ class ChecklistHistoryController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
 
             fputcsv($out, [
-                'Tanggal', 'Kode Armada', 'Plat Nomor', 'Tipe Kendaraan',
+                'Tanggal', 'Plat Nomor', 'Tipe Kendaraan',
                 'Petugas', 'Jenis Checklist', 'Status', 'Item Bermasalah', 'Kelayakan (%)',
             ]);
 
@@ -383,7 +382,6 @@ class ChecklistHistoryController extends Controller
 
                 fputcsv($out, [
                     $row->tanggal->format('Y-m-d H:i'),
-                    $row->vehicle->kode_armada ?? '-',
                     $row->vehicle->plat_nomor ?? '-',
                     $row->vehicle->jenis_kendaraan ?? '-',
                     $row->driver->name ?? '-',

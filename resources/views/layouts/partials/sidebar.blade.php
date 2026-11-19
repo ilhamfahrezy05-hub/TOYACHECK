@@ -4,11 +4,7 @@
     <a href="{{ route('dashboard') }}" class="sidebar-logo">
         <span class="sidebar-logo-text">
             T<span class="sidebar-logo-o">
-                <svg viewBox="0 0 36 36" width="21" height="21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="18" cy="18" rx="14" ry="15" stroke="#FFFFFF" stroke-width="3.2"/>
-                    <path d="M9 17.5C13.5 22 18.5 11 27.5 13" stroke="#60A5FA" stroke-width="2.8" stroke-linecap="round"/>
-                    <path d="M9.5 22C14.5 25.5 20 15.5 27 17.5" stroke="#93C5FD" stroke-width="2.3" stroke-linecap="round"/>
-                </svg>
+                <img src="{{ asset('img/logo.png') }}" alt="" width="21" height="21">
             </span>YACHECK
         </span>
     </a>

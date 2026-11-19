@@ -283,7 +283,7 @@
                             <td>
                                 @if($req->maintenance)
                                     <a href="{{ route('maintenances.show', $req->maintenance_id) }}" style="font-weight:600;font-family:monospace;color:var(--primary);text-decoration:none">
-                                        {{ $req->maintenance->vehicle->kode_armada ?? '#' . $req->maintenance_id }}
+                                        {{ $req->maintenance->vehicle->plat_nomor ?? '#' . $req->maintenance_id }}
                                     </a>
                                 @else
                                     <span style="color:var(--text-muted)">—</span>
@@ -439,7 +439,7 @@
                         <option value="">-- Pengajuan Umum / Stok Gudang --</option>
                         @foreach($maintenances as $mOpt)
                             <option value="{{ $mOpt->id }}">
-                                #{{ $mOpt->id }} &bull; {{ $mOpt->vehicle->kode_armada ?? '-' }} ({{ $mOpt->vehicle->plat_nomor ?? '-' }})
+                                #{{ $mOpt->id }} &bull; {{ $mOpt->vehicle->plat_nomor ?? '-' }} ({{ $mOpt->vehicle->merk ?? '-' }})
                             </option>
                         @endforeach
                     </select>
@@ -531,7 +531,7 @@
                         <option value="">-- Pengajuan Umum / Stok Gudang --</option>
                         @foreach($maintenances as $mOpt)
                             <option value="{{ $mOpt->id }}">
-                                #{{ $mOpt->id }} &bull; {{ $mOpt->vehicle->kode_armada ?? '-' }} ({{ $mOpt->vehicle->plat_nomor ?? '-' }})
+                                #{{ $mOpt->id }} &bull; {{ $mOpt->vehicle->plat_nomor ?? '-' }} ({{ $mOpt->vehicle->merk ?? '-' }})
                             </option>
                         @endforeach
                     </select>

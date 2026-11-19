@@ -68,9 +68,9 @@
             <label class="form-label" for="f_vehicle">Armada</label>
             <select id="f_vehicle" name="vehicle_id" class="form-control">
                 <option value="">Semua Armada</option>
-                @foreach($vehicles as $v)
-                    <option value="{{ $v->id }}" {{ ($filters['vehicle_id'] ?? '') == $v->id ? 'selected' : '' }}>
-                        {{ $v->kode_armada }} · {{ strtoupper($v->plat_nomor) }}
+                @foreach($vehicles ?? [] as $v)
+                    <option value="{{ $v->id }}" {{ (string)($filters['vehicle_id'] ?? '') === (string)$v->id ? 'selected' : '' }}>
+                        {{ strtoupper($v->plat_nomor) }} ({{ $v->merk }})
                     </option>
                 @endforeach
             </select>
@@ -146,7 +146,8 @@
                         </td>
 
                         <td>
-                            <div style="font-weight:600;font-family:monospace;font-size:13px">{{ $row->vehicle->kode_armada ?? '—' }}</div>
+                            <div style="font-weight:600;font-family:monospace;font-size:13px">{{ $row->vehicle->merk ?? '—' }}</div>
+                            <div style="font-weight:600;font-family:monospace;font-size:13px">{{ $row->vehicle->jenis_kendaraan ?? '—' }}</div>
                             <span style="background:#0F1E36;color:#fff;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;font-family:monospace">
                                 {{ strtoupper($row->vehicle->plat_nomor ?? '-') }}
                             </span>

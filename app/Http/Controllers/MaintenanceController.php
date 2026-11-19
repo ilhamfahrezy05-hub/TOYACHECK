@@ -50,8 +50,7 @@ class MaintenanceController extends Controller
         ];
 
         // Daftar armada untuk form input log perbaikan
-        $vehicles = Vehicle::where('status', '!=', Vehicle::STATUS_NONAKTIF)
-            ->orderBy('kode_armada')
+        $vehicles = Vehicle::where('status', '!=', Vehicle::STATUS_NONAKTIF)    
             ->get();
 
         // Daftar mekanik (jika belum ada user bertole mekanik, ambil semua user aktif)
@@ -92,7 +91,7 @@ class MaintenanceController extends Controller
             ->when($status, fn ($q) => $q->where('status_maintenance', $status))
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
-                    $sub->whereHas('vehicle', fn ($v) => $v->where('plat_nomor', 'like', "%{$search}%")->orWhere('kode_armada', 'like', "%{$search}%"))
+                    $sub->whereHas('vehicle', fn ($v) => $v->where('plat_nomor', 'like', "%{$search}%")->orWhere('merk', 'like', "%{$search}%")->orWhere('jenis_kendaraan', 'like', "%{$search}%"))
                         ->orWhereHas('mekanik', fn ($m) => $m->where('name', 'like', "%{$search}%"))
                         ->orWhere('deskripsi_masalah', 'like', "%{$search}%")
                         ->orWhere('kategori_kendala', 'like', "%{$search}%");

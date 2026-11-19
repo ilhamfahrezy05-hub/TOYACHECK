@@ -62,7 +62,6 @@ class ChecklistController extends Controller
 
         // Daftar unit armada aktif yang dapat diperiksa
         $vehicles = Vehicle::where('status', '!=', Vehicle::STATUS_NONAKTIF)
-            ->orderBy('kode_armada')
             ->get();
 
         // Parameter pemeriksaan aktif per kategori (Fisik dan K3)
@@ -83,8 +82,8 @@ class ChecklistController extends Controller
 
         return view('checklists.index', compact(
             'checklists',
-            'stats',
             'vehicles',
+            'stats',
             'inspectionGroups',
             'allowedTypes',
             'typeFilter',

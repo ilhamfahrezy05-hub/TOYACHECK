@@ -2,7 +2,7 @@
 
 @section('title', 'Detail Checklist')
 @section('page-title', 'Detail Checklist')
-@section('page-subtitle', 'Hasil pemeriksaan ' . ($checklist->vehicle->kode_armada ?? 'armada'))
+@section('page-subtitle', 'Hasil pemeriksaan unit ' . ($checklist->vehicle->plat_nomor ?? 'armada'))
 
 @section('page-actions')
     <div class="d-flex gap-8 align-center">
@@ -128,13 +128,6 @@
                     @else
                         <span class="badge badge-primary"><i class="fa-solid fa-truck-ramp-box"></i> Fisik Kendaraan</span>
                     @endif
-                </span>
-            </div>
-
-            <div class="ck-meta-row">
-                <span class="ck-meta-key">Kode Armada</span>
-                <span class="ck-meta-val" style="font-family:monospace">
-                    {{ $checklist->vehicle->kode_armada ?? '—' }}
                 </span>
             </div>
 

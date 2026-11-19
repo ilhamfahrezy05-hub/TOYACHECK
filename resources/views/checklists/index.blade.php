@@ -215,7 +215,7 @@
                         $petugasNama = $checklist->driver->name ?? $checklist->user->name ?? '—';
                     @endphp
                     <tr
-                        data-armada="{{ strtolower(($checklist->vehicle->kode_armada ?? '') . ' ' . ($checklist->vehicle->plat_nomor ?? '')) }}"
+                        data-armada="{{ strtolower(($checklist->vehicle->plat_nomor ?? '') . ' ' . ($checklist->vehicle->merk ?? '') . ' ' . ($checklist->vehicle->jenis_kendaraan ?? '')) }}"
                         data-petugas="{{ strtolower($petugasNama) }}"
                         data-type="{{ $checklist->checklist_type }}"
                         data-status="{{ $checklist->status }}">
@@ -250,9 +250,8 @@
                                     <i class="fa-solid fa-truck-front"></i>
                                 </div>
                                 <div>
-                                    <div style="font-weight:600;font-family:monospace;font-size:13px">
-                                        {{ $checklist->vehicle->kode_armada ?? '—' }}
-                                    </div>
+                                    <div style="font-weight:600;font-family:monospace;font-size:13px">{{ $checklist->vehicle->merk ?? '—' }}</div>
+                                    <div style="font-weight:600;font-family:monospace;font-size:13px">{{ $checklist->vehicle->jenis_kendaraan ?? '—' }}</div>
                                     <span class="ck-plat" style="font-size:10px;padding:1px 7px">
                                         {{ strtoupper($checklist->vehicle->plat_nomor ?? '-') }}
                                     </span>
@@ -363,7 +362,7 @@
                             <option value="">— Pilih Armada —</option>
                             @foreach($vehicles as $v)
                                 <option value="{{ $v->id }}" {{ old('vehicle_id') == $v->id ? 'selected' : '' }}>
-                                    {{ $v->kode_armada }} · {{ strtoupper($v->plat_nomor) }} ({{ ucfirst($v->status) }})
+                                    {{ strtoupper($v->plat_nomor) }} · {{ $v->merk }} - {{ $v->jenis_kendaraan }} ({{ ucfirst(str_replace('_', ' ', $v->status)) }})
                                 </option>
                             @endforeach
                         </select>

@@ -510,7 +510,7 @@
             <tr>
                 <td class="fisik-meta-label">No. Polisi</td>
                 <td class="fisik-meta-colon">:</td>
-                <td><strong>{{ $v->plat_nomor }}</strong> ({{ $v->kode_armada }})</td>
+                <td><strong>{{ $v->plat_nomor }}</strong> ({{ $v->merk }})</td>
             </tr>
             <tr>
                 <td class="fisik-meta-label">Jenis Mobil</td>
@@ -632,7 +632,7 @@
             </tr>
             <tr>
                 <td>Nomor Kendaraan</td>
-                <td>: <span class="k3-meta-line">{{ $v->plat_nomor }} ({{ $v->kode_armada }})</span></td>
+                <td>: <span class="k3-meta-line">{{ $v->plat_nomor }} ({{ $v->merk }})</span></td>
                 <td>Pengemudi</td>
                 <td>: <span class="k3-meta-line">{{ $sheet['driverName'] }}</span></td>
             </tr>

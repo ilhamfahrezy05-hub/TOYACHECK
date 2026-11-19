@@ -117,7 +117,7 @@
                         };
                     @endphp
                     <tr
-                        data-armada="{{ strtolower(($item->vehicle->kode_armada ?? '') . ' ' . ($item->vehicle->plat_nomor ?? '')) }}"
+                        data-armada="{{ strtolower(($item->vehicle->plat_nomor ?? '') . ' ' . ($item->vehicle->merk ?? '')) }}"
                         data-mekanik="{{ strtolower($item->mekanik->name ?? '') }}"
                         data-status="{{ $item->status_maintenance }}">
 
@@ -142,9 +142,8 @@
                                     <i class="fa-solid fa-truck"></i>
                                 </div>
                                 <div>
-                                    <div style="font-weight:600;font-family:monospace;font-size:13px">
-                                        {{ $item->vehicle->kode_armada ?? '—' }}
-                                    </div>
+                                    <div style="font-weight:600;font-family:monospace;font-size:13px">{{ $item->vehicle->merk ?? '—' }}</div>
+                            <div style="font-weight:600;font-family:monospace;font-size:13px">{{ $item->vehicle->jenis_kendaraan ?? '—' }}</div>
                                     <span style="background:#0F1E36;color:#fff;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;font-family:monospace">
                                         {{ strtoupper($item->vehicle->plat_nomor ?? '-') }}
                                     </span>
@@ -226,7 +225,7 @@
                                         class="btn btn-warning btn-sm btn-icon"
                                         title="Edit Catatan Perbaikan"
                                         data-id="{{ $item->id }}"
-                                        data-armada="{{ ($item->vehicle->kode_armada ?? '-') . ' (' . ($item->vehicle->plat_nomor ?? '-') . ')' }}"
+                                        data-armada="{{ ($item->vehicle->plat_nomor ?? '-') . ' (' . ($item->vehicle->merk ?? '-') . ')' }}"
                                         data-status="{{ $item->status_maintenance }}"
                                         data-kategori="{{ $item->kategori_kendala ?? '' }}"
                                         data-driver="{{ $item->nama_driver ?? '' }}"
@@ -367,7 +366,7 @@
                         <option value="">-- Pengajuan Umum / Stok Gudang --</option>
                         @foreach($maintenances as $mOpt)
                             <option value="{{ $mOpt->id }}">
-                                #{{ $mOpt->id }} &bull; {{ $mOpt->vehicle->kode_armada ?? '-' }} ({{ $mOpt->vehicle->plat_nomor ?? '-' }}) &mdash; {{ \Illuminate\Support\Str::limit($mOpt->deskripsi_masalah, 40) }}
+                                #{{ $mOpt->id }} &bull; {{ $mOpt->vehicle->plat_nomor ?? '-' }} ({{ $mOpt->vehicle->merk ?? '-' }}) &mdash; {{ \Illuminate\Support\Str::limit($mOpt->deskripsi_masalah, 40) }}
                             </option>
                         @endforeach
                     </select>
